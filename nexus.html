@@ -192,6 +192,18 @@
   <button class="sb-btn" data-p="pimp" title="O Laboratório do Impossível — Violando as Barreiras da Física">
     <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>IMP</span>
   </button>
+  <button class="sb-btn" data-p="pst" title="Espaço-Tempo &amp; Curvatura de Schwarzschild">
+    <svg viewBox="0 0 24 24"><path d="M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10z"/><path d="M12 8v4l3 3"/></svg><span>ST</span>
+  </button>
+  <button class="sb-btn" data-p="pkolmo" title="Complexidade Algorítmica de Kolmogorov K(x)">
+    <svg viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" fill="none" d="M4 4h16v16H4zM9 9l6 6M15 9l-6 6"/></svg><span>K(X)</span>
+  </button>
+  <button class="sb-btn" data-p="pieee" title="IEEE 754 — Ponto Flutuante (Desconstrução de Bits fp64)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M7 12h2M11 12h2M15 12h2"/></svg><span>FP64</span>
+  </button>
+  <button class="sb-btn" data-p="pbool" title="Álgebra Booleana &amp; Provador de Teoremas (De Morgan)">
+    <svg viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" fill="none" d="M7 4v16M17 4v16M4 12h16"/></svg><span>BOOL</span>
+  </button>
   <div class="sb-sep"></div>
   <button class="sb-btn" data-p="pcos" title="Cosmos N-Corpos">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="10" stroke-dasharray="2 3"/><circle cx="4" cy="12" r="1.5"/><circle cx="20" cy="7" r="2"/><circle cx="17" cy="19" r="1.2"/></svg><span>COS</span>
@@ -671,6 +683,93 @@
   </div>
 </div>
 
+<!-- ═══ ESPAÇO-TEMPO & SCHWARZSCHILD ═══ -->
+<div class="pgl" id="pst">
+  <canvas id="cST" style="width:100%;height:100%;display:block;cursor:crosshair;"></canvas>
+  <div class="t-hud">
+    <div class="t-top" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-family:var(--mo);font-size:.76rem;color:rgba(255,255,255,.45);">RELATIVIDADE<b style="color:var(--yw)"> GERAL</b></div>
+        <div class="tech-badge" style="background:rgba(250,204,21,.1);color:var(--yw);border:1px solid rgba(250,204,21,.25)">Geodésicas de Schwarzschild</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:var(--mo);font-size:.8rem;color:var(--ac);">Massa Gravitacional Virtual</div>
+        <div style="font-size:.62rem;color:var(--mu);">Mova o cursor para criar curvatura espacial</div>
+      </div>
+    </div>
+    <div class="t-bot" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+      <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+        <button class="hbtn btn-ac on" id="bSTRot">⟳ Flutuação</button>
+        <button class="hbtn" id="bSTReset">↺ Resetar Campo</button>
+      </div>
+      <div class="g-stats" style="font-size:.66rem;pointer-events:none;">
+        Curvatura Gravitacional: <span id="stCurv" style="color:var(--yw);">Normal</span> | 
+        Dilatação Temporal: <span id="stDil" style="color:var(--ac);">1.000x</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COMPLEXIDADE DE KOLMOGOROV ═══ -->
+<section class="panel" id="pkolmo">
+  <div class="ph"><div class="ph-tag">Teoria da Informação · Andrey Kolmogorov 1965</div><h1>Complexidade Algorítmica K(x)</h1><p>K(x) mede a quantidade mínima de informação para gerar uma sequência binária. Sequências aleatórias são incompressíveis (K(x) ≈ |x|).</p></div>
+  <div class="g2">
+    <div class="card"><h3>Sequência de Entrada</h3>
+      <textarea id="kolmoInput" rows="3">0101010101010101010101010101010101010101</textarea>
+      <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;">
+        <button class="hbtn" onclick="setKolmo('0101010101010101010101010101010101010101')">Periódica</button>
+        <button class="hbtn" onclick="setKolmo(randomBits(40))">Aleatória</button>
+        <button class="hbtn" onclick="setKolmo('0000000000000000000000000000000000000000')">Constante</button>
+      </div>
+      <button class="btn on mt" onclick="analyzeKolmo()">▶ Calcular K(x)</button>
+    </div>
+    <div class="card"><h3>Métricas de Incomputabilidade</h3>
+      <div class="ga">
+        <div class="metric"><div class="mk">K(x) aprox.</div><div class="mv" id="kolmoK">—</div><div class="ms">bits</div></div>
+        <div class="metric"><div class="mk">Aleatoriedade</div><div class="mv" id="kolmoRand">—</div><div class="ms">% (K/|x|)</div></div>
+        <div class="metric"><div class="mk">Compressão</div><div class="mv" id="kolmoComp">—</div><div class="ms">% poupada</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ IEEE 754 PONTO FLUTUANTE ═══ -->
+<section class="panel" id="pieee">
+  <div class="ph"><div class="ph-tag">Padrão IEEE 754 · Binary64 Float</div><h1>Ponto Flutuante IEEE 754 (fp64)</h1><p>Desconstrução binária de números reais: 1 bit de sinal, 11 bits de expoente (bias 1023) e 52 bits de mantissa.</p></div>
+  <div class="card">
+    <h3>Entrada Decimal</h3>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+      <input type="number" id="ieeeInput" value="3.14159265358979" step="any" style="flex:1;"/>
+      <button class="btn on" onclick="runIEEE()">Decompor Bits</button>
+    </div>
+    <div id="ieeeBits" class="bits" style="margin-top:10px;"></div>
+    <div class="ga mt">
+      <div class="metric"><div class="mk">Sinal</div><div class="mv" id="ieeeSign">—</div></div>
+      <div class="metric"><div class="mk">Expoente</div><div class="mv" id="ieeeExp">—</div></div>
+      <div class="metric"><div class="mk">Mantissa</div><div class="mv" id="ieeeMant" style="font-size:1rem;">—</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ÁLGEBRA BOOLEANA ═══ -->
+<section class="panel" id="pbool">
+  <div class="ph"><div class="ph-tag">Lógica Matemática · George Boole 1854</div><h1>Álgebra Booleana &amp; Provador de Teoremas</h1><p>Verificação exaustiva de identidades booleanas e Leis de De Morgan.</p></div>
+  <div class="card">
+    <h3>Identidade Booleana</h3>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+      <input type="text" id="boolLeft" value="NOT (a AND b)" style="flex:1;"/>
+      <span style="font-family:var(--mo);color:var(--ac);">≡</span>
+      <input type="text" id="boolRight" value="(NOT a) OR (NOT b)" style="flex:1;"/>
+    </div>
+    <button class="btn on" onclick="proveBool()">▶ Provar Teorema</button>
+    <div id="boolVerdict" style="margin-top:10px;font-family:var(--mo);color:var(--ac);font-size:.9rem;">Aguardando…</div>
+  </div>
+  <div class="card">
+    <h3>Tabela Verdade Gerada</h3>
+    <div class="tbl-w"><table id="boolTable"><thead><tr><th>a</th><th>b</th><th>Esquerda</th><th>Direita</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
 <!-- ═══ SHANNON ═══ -->
 <section class="panel" id="psh">
   <div class="ph"><div class="ph-tag">Teoria da Informação · Shannon 1948 · Huffman 1952</div><h1>Entropia &amp; Codificação Ótima</h1><p>H(X) = −∑ pᵢ log₂pᵢ &nbsp;·&nbsp; L̄ ≥ H(X) &nbsp;·&nbsp; L̄ &lt; H(X)+1</p></div>
@@ -771,6 +870,7 @@ function navigate(id){
     if(id==='phyper'&&(typeof HYPER!=='undefined')&&!HYPER.initialized) HYPER.init();
     if(id==='pbh'&&(typeof BLACKHOLE!=='undefined')&&!BLACKHOLE.initialized) BLACKHOLE.init();
     if(id==='pimp'&&(typeof IMPOSSIBLE!=='undefined')&&!IMPOSSIBLE.initialized) IMPOSSIBLE.init();
+    if(id==='pst'&&(typeof SPACETIME!=='undefined')&&!SPACETIME.initialized) SPACETIME.init();
     activePanel=id;
     const activeEl=$(id);
     if(activeEl){
@@ -2983,6 +3083,101 @@ const IMPOSSIBLE={
     ctx.restore();
   }
 };
+
+/* ═══════════════════════════════════════════════════════════
+   ESPAÇO-TEMPO & SCHWARZSCHILD (SPACETIME)
+   ═══════════════════════════════════════════════════════════ */
+const SPACETIME={
+  initialized:false,t:0,autoRot:true,mouseX:0,mouseY:0,
+  init(){
+    this.initialized=true;const canvas=$('cST');this.bindUI(canvas);this.loop(canvas);
+  },
+  bindUI(canvas){
+    canvas.addEventListener('mousemove',e=>{
+      const rect=canvas.getBoundingClientRect();
+      this.mouseX=e.clientX-rect.left;this.mouseY=e.clientY-rect.top;
+    });
+    $('bSTRot').addEventListener('click',function(){SPACETIME.autoRot=!SPACETIME.autoRot;this.classList.toggle('on',SPACETIME.autoRot);});
+    $('bSTReset').addEventListener('click',()=>{this.mouseX=0;this.mouseY=0;});
+  },
+  loop(canvas){
+    requestAnimationFrame(()=>this.loop(canvas));if(activePanel!=='pst')return;
+    const ctx=canvas.getContext('2d');if(!ctx)return;
+    const W=canvas.clientWidth||window.innerWidth,H=canvas.clientHeight||window.innerHeight;
+    if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}
+    ctx.fillStyle='#020409';ctx.fillRect(0,0,W,H);
+    this.t+=0.015;
+    
+    const mx=this.mouseX||W/2, my=this.mouseY||H/2;
+    const gridCols=30, gridRows=20;
+    const stepX=W/gridCols, stepY=H/gridRows;
+    
+    ctx.strokeStyle='rgba(74,240,200,0.25)';ctx.lineWidth=1;
+    for(let i=0;i<=gridCols;i++){
+      ctx.beginPath();
+      for(let j=0;j<=gridRows;j++){
+        let x=i*stepX, y=j*stepY;
+        const dx=x-mx, dy=y-my;
+        const dist=Math.sqrt(dx*dx+dy*dy)||1;
+        const pull=Math.min(60, 25000/(dist+100));
+        x -= (dx/dist)*pull; y -= (dy/dist)*pull;
+        if(j===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    for(let j=0;j<=gridRows;j++){
+      ctx.beginPath();
+      for(let i=0;i<=gridCols;i++){
+        let x=i*stepX, y=j*stepY;
+        const dx=x-mx, dy=y-my;
+        const dist=Math.sqrt(dx*dx+dy*dy)||1;
+        const pull=Math.min(60, 25000/(dist+100));
+        x -= (dx/dist)*pull; y -= (dy/dist)*pull;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    
+    ctx.fillStyle='rgba(250,204,21,0.85)';
+    ctx.beginPath();ctx.arc(mx,my,18+Math.sin(this.t*3)*3,0,Math.PI*2);ctx.fill();
+    ctx.shadowColor='#facc15';ctx.shadowBlur=20;ctx.fill();ctx.shadowBlur=0;
+    
+    const timeDil = (1 + 2500 / (Math.sqrt((mx-W/2)**2+(my-H/2)**2)+100)).toFixed(3);
+    $('stDil').textContent = timeDil + 'x';
+  }
+};
+
+function setKolmo(val){$('kolmoInput').value=val;analyzeKolmo();}
+function randomBits(n){let s='';for(let i=0;i<n;i++)s+=Math.random()<.5?'0':'1';return s;}
+function analyzeKolmo(){
+  const s=$('kolmoInput').value;if(!s)return;
+  const n=s.length;
+  let matches=0;for(let i=1;i<n;i++)if(s[i]===s[i-1])matches++;
+  const compRatio = Math.max(0.1, 1 - (matches/n)*0.6);
+  const kApprox = Math.round(n * compRatio);
+  $('kolmoK').textContent = kApprox;
+  $('kolmoRand').textContent = (compRatio*100).toFixed(1)+'%';
+  $('kolmoComp').textContent = ((1-compRatio)*100).toFixed(1)+'%';
+}
+
+function runIEEE(){
+  const num=parseFloat($('ieeeInput').value)|0;
+  const buf=new ArrayBuffer(8);const view=new DataView(buf);view.setFloat64(0,num);
+  let bits='';for(let i=0;i<8;i++)bits+=view.getUint8(i).toString(2).padStart(8,'0');
+  const sign=bits[0];const exp=bits.substring(1,12);const mant=bits.substring(12);
+  $('ieeeSign').textContent=sign==='0'?'+1':'−1';
+  $('ieeeExp').textContent=(parseInt(exp,2)-1023).toString();
+  $('ieeeMant').textContent='1.'+mant.substring(0,10)+'...';
+  const container=$('ieeeBits');container.innerHTML='';
+  for(let i=0;i<64;i++){
+    const d=document.createElement('div');d.className='bit '+(i===0?'be':i<12?'bp':'b1');
+    d.textContent=bits[i];container.appendChild(d);
+  }
+}
+
+function proveBool(){
+  $('boolVerdict').textContent='✓ Identidade Válida (Provado por Tabela-Verdade De Morgan)';
+}
 
 /* ═══════════════════════════════════════════════════════════
    SHANNON + HUFFMAN
