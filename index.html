@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Binary Studio — Crie seu Sistema Numérico</title>
+  <meta name="description" content="Estúdio interativo de sistemas binários: crie seu próprio código, converta mensagens, analise circuitos e visualize o DNA da computação." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="2" y="2" width="8" height="8" rx="1.5"/>
+            <rect x="14" y="2" width="8" height="8" rx="1.5"/>
+            <rect x="2" y="14" width="8" height="8" rx="1.5"/>
+            <rect x="14" y="14" width="8" height="8" rx="1.5"/>
+          </svg>
+        </div>
+        <span class="brand-name">Binary Studio</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-panel="symbols">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          <span>Meus Símbolos</span>
+        </button>
+        <button class="nav-item" data-panel="translator">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Tradutor</span>
+        </button>
+        <button class="nav-item" data-panel="oscilloscope">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span>Osciloscópio</span>
+        </button>
+        <button class="nav-item" data-panel="logic">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+          <span>Portas Lógicas</span>
+        </button>
+        <button class="nav-item" data-panel="pixels">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+          <span>Pixels & Imagens</span>
+        </button>
+        <button class="nav-item" data-panel="manipulator">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Editor de Bits</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="symbol-preview-mini">
+          <span class="sym-mini" id="sideZero">0</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span class="sym-mini" id="sideOne">1</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-area">
+
+      <!-- ───────────── PANEL: Symbols ───────────── -->
+      <section class="panel active" id="panel-symbols">
+        <div class="panel-header">
+          <h1>Configure seus Símbolos</h1>
+          <p>Redefina o que representa <em>zero</em> e <em>um</em> no seu sistema binário.</p>
+        </div>
+
+        <div class="content-grid two-col">
+          <div class="card">
+            <h2>Presets Rápidos</h2>
+            <div class="preset-grid" id="presetButtons">
+              <button class="preset-btn active" data-zero="0" data-one="1">
+                <span class="preset-symbols"><em>0</em><em>1</em></span>
+                <span class="preset-label">Padrão</span>
+              </button>
+              <button class="preset-btn" data-zero="●" data-one="○">
+                <span class="preset-symbols"><em>●</em><em>○</em></span>
+                <span class="preset-label">Círculos</span>
+              </button>
+              <button class="preset-btn" data-zero="▪" data-one="▫">
+                <span class="preset-symbols"><em>▪</em><em>▫</em></span>
+                <span class="preset-label">Quadrados</span>
+              </button>
+              <button class="preset-btn" data-zero="N" data-one="S">
+                <span class="preset-symbols"><em>N</em><em>S</em></span>
+                <span class="preset-label">Norte/Sul</span>
+              </button>
+              <button class="preset-btn" data-zero="−" data-one="|">
+                <span class="preset-symbols"><em>−</em><em>|</em></span>
+                <span class="preset-label">I Ching</span>
+              </button>
+              <button class="preset-btn" data-zero="LOW" data-one="HIGH">
+                <span class="preset-symbols mono"><em>LOW</em><em>HIGH</em></span>
+                <span class="preset-label">Voltagem</span>
+              </button>
+              <button class="preset-btn" data-zero="🌙" data-one="⚡">
+                <span class="preset-symbols"><em>🌙</em><em>⚡</em></span>
+                <span class="preset-label">Yin·Yang</span>
+              </button>
+              <button class="preset-btn" data-zero="❌" data-one="✅">
+                <span class="preset-symbols"><em>❌</em><em>✅</em></span>
+                <span class="preset-label">Bool</span>
+              </button>
+              <button class="preset-btn" data-zero="A" data-one="T">
+                <span class="preset-symbols"><em>A</em><em>T</em></span>
+                <span class="preset-label">DNA A-T</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Personalizado</h2>
+            <div class="form-field">
+              <label for="symZero">Símbolo para <span class="tag-zero">Zero / Falso / OFF</span></label>
+              <input type="text" id="symZero" value="0" maxlength="8" placeholder="Ex: 0, OFF, 🔴" />
+            </div>
+            <div class="form-field">
+              <label for="symOne">Símbolo para <span class="tag-one">Um / Verdadeiro / ON</span></label>
+              <input type="text" id="symOne" value="1" maxlength="8" placeholder="Ex: 1, ON, 🔵" />
+            </div>
+            <div class="form-field">
+              <label for="bitSeparator">Separador de Bits</label>
+              <select id="bitSeparator">
+                <option value=" ">Espaço</option>
+                <option value="">Sem separador</option>
+                <option value="-">Hífen</option>
+                <option value=".">Ponto</option>
+                <option value="|">Barra</option>
+              </select>
+            </div>
+            <div class="active-system">
+              <span class="system-label">Sistema Ativo</span>
+              <div class="system-bits">
+                <div class="system-bit zero-bit" id="previewZero">0 → 0</div>
+                <div class="system-bit one-bit" id="previewOne">1 → 1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live binary sequence demo -->
+        <div class="card full-width mt-4">
+          <h2>Visualização do Alfabeto no seu Sistema</h2>
+          <p class="card-desc">Veja como os primeiros caracteres do alfabeto ficam no seu sistema binário.</p>
+          <div class="alphabet-grid" id="alphabetGrid"></div>
+        </div>
+      </section>
+
+      <!-- ───────────── PANEL: Translator ───────────── -->
+      <section class="panel" id="panel-translator">
+        <div class="panel-header">
+          <h1>Tradutor Binário</h1>
+          <p>Converta qualquer texto ou número para o seu sistema binário, e vice-versa.</p>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab active" data-tab="textTab">Texto</button>
+          <button class="tab" data-tab="numTab">Números</button>
+          <button class="tab" data-tab="decodeTab">Decodificar</button>
+        </div>
+
+        <div class="tab-content active" id="textTab">
+          <div class="content-grid two-col mt-4">
+            <div class="card">
+              <label for="textInput">Texto Original</label>
+              <textarea id="textInput" rows="6" placeholder="Digite qualquer texto aqui...">Olá, mundo!</textarea>
+            </div>
+            <div class="card output-card">
+              <div class="card-row-head">
+                <label for="textOutput">Binário em seu Sistema</label>
+                <button class="btn-icon" id="btnCopyText" title="Copiar">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copiar
+                </button>
+              </div>
+              <textarea id="textOutput" rows="6" readonly placeholder="Resultado aparecerá aqui..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="numTab">
+          <div class="num-converter mt-4">
+            <div class="card">
+              <label for="numDecimal">Número Decimal</label>
+              <input type="number" id="numDecimal" value="42" min="0" max="16777215" />
+            </div>
+            <div class="num-arrow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+            <div class="card">
+              <label>Binário Padrão (Base 2)</label>
+              <div class="code-out" id="stdBinaryNum">00101010</div>
+            </div>
+            <div class="num-arrow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+            <div class="card highlight-card">
+              <label>Seu Sistema Customizado</label>
+              <div class="code-out custom" id="customBinaryNum">0 0 1 0 1 0 1 0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="decodeTab">
+          <div class="content-grid two-col mt-4">
+            <div class="card">
+              <label for="encodedInput">Cole sua Sequência Customizada</label>
+              <textarea id="encodedInput" rows="6" placeholder="Cole aqui sequências com seus símbolos..."></textarea>
+              <button class="btn-primary mt-2" id="btnDecode">Decodificar →</button>
+            </div>
+            <div class="card output-card">
+              <label for="decodedOutput">Texto Decodificado</label>
+              <textarea id="decodedOutput" rows="6" readonly placeholder="O texto original aparecerá aqui..."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── PANEL: Oscilloscope ───────────── -->
+      <section class="panel" id="panel-oscilloscope">
+        <div class="panel-header">
+          <h1>Osciloscópio Digital</h1>
+          <p>Visualize a onda de sinal elétrico (alta e baixa voltagem) correspondente aos bits da sua mensagem.</p>
+        </div>
+        <div class="card full-width">
+          <div class="osc-toolbar">
+            <div class="osc-source">
+              <label for="oscText">Sinal de entrada</label>
+              <input type="text" id="oscText" value="Hi" placeholder="Texto para visualizar..." />
+            </div>
+            <button class="btn-secondary" id="btnAnimateSignal">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Animar
+            </button>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="signalCanvas"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── PANEL: Logic Gates ───────────── -->
+      <section class="panel" id="panel-logic">
+        <div class="panel-header">
+          <h1>Portas Lógicas</h1>
+          <p>Simule circuitos digitais com sua própria representação binária.</p>
+        </div>
+        <div class="content-grid two-col">
+          <div class="card">
+            <h2>Simulador</h2>
+            <div class="form-field">
+              <label for="gateSelect">Porta Lógica</label>
+              <select id="gateSelect">
+                <option value="AND">AND — E lógico</option>
+                <option value="OR">OR — OU lógico</option>
+                <option value="XOR">XOR — OU Exclusivo</option>
+                <option value="NAND">NAND — Não-E</option>
+                <option value="NOR">NOR — Não-OU</option>
+                <option value="NOT">NOT — Inversor (1 entrada)</option>
+              </select>
+            </div>
+
+            <div class="logic-inputs">
+              <div class="logic-input-item">
+                <span class="logic-input-label">Entrada A</span>
+                <button class="bit-toggle" id="btnInputA" data-bit="0"></button>
+              </div>
+              <div class="logic-input-item" id="groupInputB">
+                <span class="logic-input-label">Entrada B</span>
+                <button class="bit-toggle" id="btnInputB" data-bit="0"></button>
+              </div>
+            </div>
+
+            <div class="logic-result-box">
+              <span class="logic-result-label">Saída da Porta</span>
+              <div class="logic-result-value">
+                <span id="logicResultBit" class="bit-badge">0</span>
+                <span id="logicResultSym" class="result-sym">(0)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Tabela Verdade</h2>
+            <div class="table-wrap">
+              <table class="data-table" id="truthTable">
+                <thead>
+                  <tr>
+                    <th>A</th>
+                    <th>B</th>
+                    <th>Bit</th>
+                    <th>Símbolo</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── PANEL: Pixels ───────────── -->
+      <section class="panel" id="panel-pixels">
+        <div class="panel-header">
+          <h1>Pixels & Imagens em Binário</h1>
+          <p>Cada pixel é um bit. Desenhe e veja como o computador traduz sua arte em código binário.</p>
+        </div>
+
+        <div class="content-grid two-col">
+          <div class="card">
+            <div class="card-row-head mb-2">
+              <h2>Canvas de Pixels (8×8)</h2>
+              <div class="pixel-presets">
+                <button class="btn-sm active" id="btnPresetHeart">❤</button>
+                <button class="btn-sm" id="btnPresetSmiley">☺</button>
+                <button class="btn-sm" id="btnPresetInvader">★</button>
+                <button class="btn-sm" id="btnPresetClear">✕</button>
+              </div>
+            </div>
+            <div class="pixel-grid" id="pixelMatrix"></div>
+          </div>
+
+          <div class="card output-card">
+            <div class="card-row-head mb-2">
+              <label for="imgBinaryOutput">Código da Imagem</label>
+              <button class="btn-icon" id="btnCopyImgBin">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copiar
+              </button>
+            </div>
+            <textarea id="imgBinaryOutput" rows="5" readonly></textarea>
+
+            <label class="mt-3" for="imgCustomOutput">Em seus Símbolos</label>
+            <textarea id="imgCustomOutput" rows="5" readonly></textarea>
+
+            <div class="reconstruct-zone mt-3">
+              <label for="imgBinaryInput">Renderizar a partir de bits</label>
+              <div class="reconstruct-row">
+                <input type="text" id="imgBinaryInput" placeholder="64 bits (ex: 01100110...)" maxlength="64" />
+                <button class="btn-secondary" id="btnRenderFromBin">Renderizar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── PANEL: Bit Editor ───────────── -->
+      <section class="panel" id="panel-manipulator">
+        <div class="panel-header">
+          <h1>Editor de Bits</h1>
+          <p>Clique em qualquer bit para alternar entre zero e um. Veja o valor decimal e o caractere ASCII correspondente em tempo real.</p>
+        </div>
+
+        <div class="card full-width">
+          <div class="bit-editor-wrap">
+            <div class="bit-editor-row" id="interactiveBitRow"></div>
+            <div class="bit-editor-stats">
+              <div class="stat">
+                <span class="stat-k">Decimal</span>
+                <span class="stat-v" id="bitMatrixDecimal">65</span>
+              </div>
+              <div class="stat">
+                <span class="stat-k">Binário</span>
+                <span class="stat-v mono" id="bitMatrixBinary">01000001</span>
+              </div>
+              <div class="stat">
+                <span class="stat-k">ASCII</span>
+                <span class="stat-v" id="bitMatrixChar">'A'</span>
+              </div>
+              <div class="stat">
+                <span class="stat-k">Seus Símbolos</span>
+                <span class="stat-v mono" id="bitMatrixCustom">01000001</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="neo-effects" aria-hidden="true">
+    <span class="orb o1"></span>
+    <span class="orb o2"></span>
+    <span class="orb o3"></span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Binary Research Platform — Mestrado em Teoria da Informação</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+/* ── Reset & Base ───────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090b;--surface:#111113;--surface2:#18181b;--surface3:#1f1f23;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+  --text:rgba(255,255,255,.92);--muted:rgba(255,255,255,.48);--faint:rgba(255,255,255,.22);
+  --accent:#4af0c8;--accent2:#818cf8;--warn:#f59e0b;--danger:#f87171;--ok:#34d399;
+  --red:#f87171;--blue:#60a5fa;--purple:#a78bfa;--pink:#f472b6;
+  --font:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --serif:'Playfair Display',Georgia,serif;
+  --r:10px;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
+
+/* ── Shell ──────────────────────────────────── */
+.shell{display:flex;height:100vh;overflow:hidden;}
+
+/* ── Sidebar ────────────────────────────────── */
+.sidebar{
+  width:240px;flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.sb-brand{
+  padding:20px 18px 16px;
+  border-bottom:1px solid var(--border);
+}
+.sb-brand .title{font-family:var(--serif);font-size:1.05rem;font-weight:700;color:var(--text);line-height:1.3;}
+.sb-brand .sub{font-size:.68rem;color:var(--muted);margin-top:3px;letter-spacing:.06em;}
+.sb-section{padding:10px 10px 4px;font-size:.64rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;margin:0 6px 2px;
+  border-radius:8px;cursor:pointer;
+  font-size:.78rem;color:var(--muted);
+  transition:all .15s;border:none;background:none;width:calc(100% - 12px);text-align:left;
+}
+.sb-item:hover{background:rgba(255,255,255,.05);color:var(--text);}
+.sb-item.active{background:rgba(74,240,200,.08);color:var(--accent);border:1px solid rgba(74,240,200,.15);}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sb-badge{
+  margin-left:auto;padding:2px 6px;border-radius:4px;
+  font-size:.6rem;font-family:var(--mono);
+  background:rgba(255,255,255,.07);color:var(--muted);
+}
+.sb-footer{margin-top:auto;padding:14px;border-top:1px solid var(--border);}
+.sb-footer a{font-size:.72rem;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:6px;}
+.sb-footer a:hover{color:var(--text);}
+
+/* ── Main ───────────────────────────────────── */
+.main{flex:1;overflow-y:auto;padding:28px 32px 40px;}
+
+/* ── Panel ──────────────────────────────────── */
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* ── Page header ────────────────────────────── */
+.page-header{margin-bottom:28px;}
+.page-header .ph-eyebrow{font-size:.68rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+.page-header h1{font-family:var(--serif);font-size:1.8rem;font-weight:700;color:var(--text);line-height:1.25;}
+.page-header .ph-sub{font-size:.83rem;color:var(--muted);margin-top:8px;line-height:1.65;max-width:680px;}
+
+/* ── Cards ──────────────────────────────────── */
+.card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px 22px;margin-bottom:16px;
+}
+.card.accent-border{border-color:rgba(74,240,200,.2);}
+.card.warn-border{border-color:rgba(245,158,11,.2);}
+.card.ok-border{border-color:rgba(52,211,153,.2);}
+.card h3{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.card h3 .tag{font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
+.tag-theorem{background:rgba(129,140,248,.15);color:var(--accent2);}
+.tag-proof{background:rgba(74,240,200,.12);color:var(--accent);}
+.tag-test{background:rgba(245,158,11,.12);color:var(--warn);}
+.tag-result{background:rgba(52,211,153,.12);color:var(--ok);}
+.tag-error{background:rgba(248,113,113,.12);color:var(--danger);}
+
+/* ── Grid ───────────────────────────────────── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+
+/* ── Metric ─────────────────────────────────── */
+.metric{background:var(--surface3);border-radius:8px;padding:14px 16px;}
+.metric .m-label{font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.metric .m-value{font-size:1.6rem;font-weight:700;font-family:var(--mono);color:var(--accent);margin:4px 0 2px;}
+.metric .m-sub{font-size:.72rem;color:var(--muted);}
+
+/* ── Form controls ──────────────────────────── */
+.form-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap;}
+label{font-size:.74rem;color:var(--muted);display:block;margin-bottom:5px;}
+input[type=text],input[type=number],textarea,select{
+  background:var(--surface3);border:1px solid var(--border2);
+  color:var(--text);border-radius:7px;padding:9px 12px;
+  font-family:var(--font);font-size:.82rem;outline:none;
+  transition:border-color .15s;
+}
+input:focus,textarea:focus,select:focus{border-color:rgba(74,240,200,.4);}
+input[type=range]{accent-color:var(--accent);}
+textarea{resize:vertical;min-height:80px;width:100%;}
+.field{flex:1;min-width:120px;}
+
+/* ── Buttons ────────────────────────────────── */
+.btn{
+  padding:8px 16px;border-radius:8px;cursor:pointer;
+  font-family:var(--font);font-size:.78rem;font-weight:500;
+  border:1px solid var(--border2);background:var(--surface3);color:var(--text);
+  transition:all .15s;white-space:nowrap;
+}
+.btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);}
+.btn-accent{background:rgba(74,240,200,.1);border-color:rgba(74,240,200,.3);color:var(--accent);}
+.btn-accent:hover{background:rgba(74,240,200,.18);}
+.btn-warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--warn);}
+.btn-sm{padding:5px 11px;font-size:.72rem;}
+
+/* ── Code / Output ──────────────────────────── */
+.code-block{
+  background:#0d0d10;border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;font-family:var(--mono);font-size:.76rem;
+  color:var(--accent);line-height:1.7;overflow-x:auto;white-space:pre-wrap;
+  word-break:break-all;max-height:220px;overflow-y:auto;
+}
+.code-block .c-comment{color:var(--muted);}
+.code-block .c-kw{color:var(--purple);}
+.code-block .c-num{color:var(--warn);}
+.code-block .c-str{color:var(--pink);}
+.inline-code{font-family:var(--mono);font-size:.8em;background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px;color:var(--accent);}
+
+/* ── Table ──────────────────────────────────── */
+.data-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.data-table th{text-align:left;padding:8px 10px;color:var(--muted);font-weight:500;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);}
+.data-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);}
+.data-table tr:hover td{background:rgba(255,255,255,.02);}
+.data-table td.mono{font-family:var(--mono);}
+.data-table td.ok{color:var(--ok);}
+.data-table td.warn{color:var(--warn);}
+.data-table td.bad{color:var(--danger);}
+
+/* ── Canvas ─────────────────────────────────── */
+canvas.chart{background:var(--surface3);border-radius:8px;width:100%;display:block;}
+
+/* ── Bit cell ───────────────────────────────── */
+.bit-seq{display:flex;flex-wrap:wrap;gap:3px;font-family:var(--mono);font-size:.72rem;}
+.bit-cell{
+  width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+  border-radius:4px;cursor:pointer;transition:all .15s;font-weight:700;user-select:none;
+}
+.bit-cell.b0{background:rgba(14,165,233,.1);color:var(--blue);border:1px solid rgba(14,165,233,.2);}
+.bit-cell.b1{background:rgba(74,240,200,.12);color:var(--accent);border:1px solid rgba(74,240,200,.28);}
+.bit-cell.b-hamming{background:rgba(245,158,11,.12);color:var(--warn);border:1px solid rgba(245,158,11,.28);}
+.bit-cell.b-error{background:rgba(248,113,113,.18);color:var(--danger);border:1px solid rgba(248,113,113,.35);animation:blink .5s infinite;}
+@keyframes blink{50%{opacity:.4}}
+
+/* ── Theorem block ──────────────────────────── */
+.theorem-block{
+  background:rgba(129,140,248,.05);border-left:3px solid var(--accent2);
+  border-radius:0 8px 8px 0;padding:14px 16px;margin:12px 0;
+  font-size:.8rem;line-height:1.7;color:var(--text);
+}
+.theorem-block strong{color:var(--accent2);}
+.proof-block{
+  background:rgba(74,240,200,.04);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;padding:14px 16px;margin:12px 0;
+  font-size:.78rem;line-height:1.7;color:var(--muted);
+}
+.qed{float:right;font-family:var(--mono);font-size:.9rem;color:var(--accent);}
+
+/* ── Tape (Turing) ──────────────────────────── */
+.turing-tape{
+  display:flex;gap:2px;overflow-x:auto;padding:8px 0;
+}
+.tape-cell{
+  min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border2);border-radius:5px;
+  font-family:var(--mono);font-size:.82rem;color:var(--text);
+  flex-shrink:0;
+}
+.tape-cell.head{border-color:var(--accent);background:rgba(74,240,200,.1);color:var(--accent);}
+.tape-cell.blank{color:var(--faint);}
+
+/* ── Progress bar ───────────────────────────── */
+.prog-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin:6px 0;}
+.prog-fill{height:100%;border-radius:3px;transition:width .3s;}
+
+/* ── Status badge ───────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:.68rem;font-weight:600;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.badge-ok{background:rgba(52,211,153,.1);color:var(--ok);}
+.badge-warn{background:rgba(245,158,11,.1);color:var(--warn);}
+.badge-error{background:rgba(248,113,113,.1);color:var(--danger);}
+.badge-info{background:rgba(74,240,200,.1);color:var(--accent);}
+
+/* ── Divider ────────────────────────────────── */
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+/* ── Huffman tree ───────────────────────────── */
+#huffCanvas{border-radius:8px;}
+
+/* misc */
+.mt-2{margin-top:8px} .mt-3{margin-top:12px} .mt-4{margin-top:16px} .mt-6{margin-top:24px}
+.mb-2{margin-bottom:8px}
+.text-accent{color:var(--accent)} .text-warn{color:var(--warn)} .text-ok{color:var(--ok)} .text-muted{color:var(--muted)}
+.flex{display:flex} .items-center{align-items:center} .gap-2{gap:8px} .gap-3{gap:12px}
+.w-full{width:100%} .font-mono{font-family:var(--mono)}
+  </style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="title">Binary Research<br>Platform</div>
+    <div class="sub">Teoria da Informação · v2.0</div>
+  </div>
+
+  <div class="sb-section">Teoria</div>
+  <button class="sb-item active" data-p="p-shannon">
+    <div class="sb-dot" style="background:#4af0c8"></div>Entropia de Shannon
+    <span class="sb-badge">H(X)</span>
+  </button>
+  <button class="sb-item" data-p="p-huffman">
+    <div class="sb-dot" style="background:#a78bfa"></div>Codificação Huffman
+    <span class="sb-badge">∑</span>
+  </button>
+  <button class="sb-item" data-p="p-hamming">
+    <div class="sb-dot" style="background:#f59e0b"></div>Código de Hamming
+    <span class="sb-badge">ECC</span>
+  </button>
+
+  <div class="sb-section">Computação</div>
+  <button class="sb-item" data-p="p-turing">
+    <div class="sb-dot" style="background:#60a5fa"></div>Máquina de Turing
+    <span class="sb-badge">TM</span>
+  </button>
+  <button class="sb-item" data-p="p-arithmetic">
+    <div class="sb-dot" style="background:#34d399"></div>Aritmética Binária
+    <span class="sb-badge">ALU</span>
+  </button>
+  <button class="sb-item" data-p="p-boolean">
+    <div class="sb-dot" style="background:#f472b6"></div>Álgebra Booleana
+    <span class="sb-badge">∧∨¬</span>
+  </button>
+
+  <div class="sb-section">Análise</div>
+  <button class="sb-item" data-p="p-complexity">
+    <div class="sb-dot" style="background:#fb923c"></div>Complexidade K.
+    <span class="sb-badge">K(x)</span>
+  </button>
+  <button class="sb-item" data-p="p-ieee754">
+    <div class="sb-dot" style="background:#e879f9"></div>IEEE 754 Ponto Flutuante
+    <span class="sb-badge">fp64</span>
+  </button>
+  <button class="sb-item" data-p="p-benchmark">
+    <div class="sb-dot" style="background:#f87171"></div>Suite de Testes
+    <span class="sb-badge">⏱</span>
+  </button>
+
+  <div class="sb-footer">
+    <a href="universe.html">🌌 Universo 3D</a>
+    <a href="index.html" style="margin-top:6px">← Binary Studio</a>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main" id="mainArea">
+
+<!-- ══════════════════════════════════════════
+     PANEL: Shannon Entropy
+══════════════════════════════════════════════ -->
+<section class="panel active" id="p-shannon">
+  <div class="page-header">
+    <div class="ph-eyebrow">Teoria da Informação · Claude E. Shannon, 1948</div>
+    <h1>Entropia de Shannon</h1>
+    <p class="ph-sub">A entropia mede a quantidade mínima teórica de bits necessários para representar uma mensagem. É o fundamento matemático de toda compressão de dados. Shannon provou que nenhum sistema de codificação pode usar, em média, menos bits do que a entropia da fonte.</p>
+  </div>
+
+  <div class="theorem-block">
+    <strong>Teorema (Shannon, 1948):</strong> Para uma fonte discreta sem memória com alfabeto {x₁,...,xₙ} e probabilidades {p₁,...,pₙ}, a entropia é:
+    <br><br><strong>H(X) = −∑ pᵢ · log₂(pᵢ)</strong>
+    <br><br>A entropia máxima é log₂(n) bits, atingida quando todos os símbolos são equiprováveis. A entropia mínima é 0, quando um símbolo tem probabilidade 1.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Entrada <span class="tag tag-test">Análise ao vivo</span></h3>
+      <div class="form-row">
+        <div class="field"><label>Texto para analisar</label>
+          <textarea id="shannonInput" rows="4">Hello World! Binary entropy measures information density.</textarea>
+        </div>
+      </div>
+      <button class="btn btn-accent" onclick="analyzeShannon()">Calcular Entropia</button>
+    </div>
+    <div class="card">
+      <h3>Resultados <span class="tag tag-result">Calculado</span></h3>
+      <div class="grid-2">
+        <div class="metric"><div class="m-label">Entropia H(X)</div><div class="m-value" id="sEntropy">—</div><div class="m-sub">bits por símbolo</div></div>
+        <div class="metric"><div class="m-label">Eficiência</div><div class="m-value" id="sEff">—</div><div class="m-sub">% do máximo teórico</div></div>
+        <div class="metric"><div class="m-label">Bits necessários</div><div class="m-value" id="sBitsNeeded">—</div><div class="m-sub">total (teórico)</div></div>
+        <div class="metric"><div class="m-label">Bits atuais (UTF-8)</div><div class="m-value" id="sBitsActual">—</div><div class="m-sub">sem compressão</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Distribuição de Frequência & Probabilidade</h3>
+    <canvas class="chart" id="shannonChart" height="160"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>Tabela de Símbolos <span class="tag tag-result">Ordenada por probabilidade</span></h3>
+    <div style="max-height:240px;overflow-y:auto">
+      <table class="data-table" id="shannonTable">
+        <thead><tr><th>Símbolo</th><th>Freq.</th><th>P(x)</th><th>log₂(1/P)</th><th>Contribuição H</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="proof-block">
+    <strong>Prova da Maximalidade (H ≤ log₂n):</strong> Pela desigualdade de Jensen, para f(x)=log(x) côncava: ∑pᵢ·log(1/pᵢ) ≤ log(∑pᵢ·1/pᵢ) = log(n). Igualdade quando pᵢ = 1/n ∀i. <span class="qed">■</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PANEL: Huffman
+══════════════════════════════════════════════ -->
+<section class="panel" id="p-huffman">
+  <div class="page-header">
+    <div class="ph-eyebrow">Codificação · David A. Huffman, 1952</div>
+    <h1>Codificação Huffman</h1>
+    <p class="ph-sub">Algoritmo guloso que constrói um código de prefixo ótimo. Prova que símbolos mais frequentes recebem códigos mais curtos. Base do JPEG, MP3, ZIP e DEFLATE.</p>
+  </div>
+
+  <div class="theorem-block">
+    <strong>Teorema de Optimalidade de Huffman:</strong> Para qualquer fonte discreta sem memória, o código de Huffman produz o código de prefixo com comprimento médio mínimo L̄ = ∑pᵢ·lᵢ. Não existe código de prefixo com menor comprimento médio esperado.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Entrada</h3>
+      <div class="form-row">
+        <div class="field"><label>Texto</label>
+          <textarea id="huffInput" rows="3">abracadabra</textarea>
+        </div>
+      </div>
+      <button class="btn btn-accent" onclick="runHuffman()">Construir Código Huffman</button>
+    </div>
+    <div class="card">
+      <h3>Métricas <span class="tag tag-result">Comparativo</span></h3>
+      <div class="grid-2">
+        <div class="metric"><div class="m-label">Comprimento médio L̄</div><div class="m-value" id="hAvgLen">—</div><div class="m-sub">bits/símbolo</div></div>
+        <div class="metric"><div class="m-label">Entropia H(X)</div><div class="m-value" id="hEntropy">—</div><div class="m-sub">bits/símbolo</div></div>
+        <div class="metric"><div class="m-label">Redundância</div><div class="m-value" id="hRedundancy">—</div><div class="m-sub">L̄ − H(X) bits</div></div>
+        <div class="metric"><div class="m-label">Compressão</div><div class="m-value" id="hCompression">—</div><div class="m-sub">vs ASCII 8 bits</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Árvore de Huffman <span class="tag tag-proof">Construída pelo algoritmo</span></h3>
+    <canvas id="huffCanvas" height="260" style="width:100%;background:var(--surface3);border-radius:8px;"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>Tabela de Códigos</h3>
+    <table class="data-table" id="huffTable">
+      <thead><tr><th>Símbolo</th><th>Freq.</th><th>P(x)</th><th>Código Huffman</th><th>Bits</th><th>Contribuição L̄</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Mensagem Codificada</h3>
+    <div class="code-block" id="huffEncoded">—</div>
+  </div>
+
+  <div class="proof-block">
+    <strong>Prova de Optimalidade (esboço):</strong> Sejam s₁,s₂ os símbolos de menor probabilidade. Toda codificação ótima os atribui ao mesmo nó pai (se não, podemos trocar sem aumentar L̄). Removendo-os e substituindo por s* com p*=p₁+p₂, o subproblema tem o mesmo tamanho−1. Por indução, Huffman é ótimo. <span class="qed">■</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PANEL: Hamming
+══════════════════════════════════════════════ -->
+<section class="panel" id="p-hamming">
+  <div class="page-header">
+    <div class="ph-eyebrow">Código Corretor de Erros · Richard Hamming, 1950</div>
+    <h1>Código de Hamming (7,4)</h1>
+    <p class="ph-sub">O código de Hamming (7,4) transmite 4 bits de dados usando 7 bits, adicionando 3 bits de paridade que permitem detectar e corrigir qualquer erro de 1 bit. É a base de memórias ECC e RAIDs.</p>
+  </div>
+
+  <div class="theorem-block">
+    <strong>Distância de Hamming:</strong> d(u,v) = número de posições onde u e v diferem. Um código com distância mínima d_min detecta até d_min−1 erros e corrige até ⌊(d_min−1)/2⌋ erros. O Hamming(7,4) tem d_min=3, corrigindo 1 erro.
+  </div>
+
+  <div class="card">
+    <h3>Codificador <span class="tag tag-test">Interativo</span></h3>
+    <div class="form-row">
+      <div class="field"><label>4 bits de dados (d₁d₂d₃d₄)</label>
+        <input type="text" id="hammingInput" value="1011" maxlength="4" oninput="updateHamming()"/>
+      </div>
+    </div>
+    <p class="text-muted mt-2" style="font-size:.75rem">Bits de paridade p₁, p₂, p₄ são calculados automaticamente nas posições 1, 2 e 4.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Codeword (7 bits) <span class="tag tag-proof">Gerado</span></h3>
+      <div class="bit-seq mt-2" id="hammingBits"></div>
+      <div class="mt-3 font-mono text-muted" style="font-size:.72rem">
+        <span id="hammingLegend"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Verificação de Paridade</h3>
+      <table class="data-table" id="parityTable">
+        <thead><tr><th>Bit Paridade</th><th>Cobre posições</th><th>Valor</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Injetor de Erros <span class="tag tag-test">Teste</span></h3>
+    <p class="text-muted mb-2" style="font-size:.75rem">Clique em um bit para inverter (simular erro de transmissão). O código de Hamming deve detectar e corrigir automaticamente.</p>
+    <div class="bit-seq" id="hammingErrorBits"></div>
+    <div class="mt-3 flex gap-2 items-center flex-wrap">
+      <button class="btn btn-warn btn-sm" onclick="injectRandomError()">Injetar Erro Aleatório</button>
+      <button class="btn btn-sm" onclick="correctHamming()">Detectar & Corrigir</button>
+      <button class="btn btn-sm" onclick="resetHamming()">Resetar</button>
+      <span id="hammingStatus" class="badge badge-info">Aguardando…</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Matriz Geradora H (7×4) <span class="tag tag-theorem">Matricial</span></h3>
+    <div class="code-block" id="hammingMatrix">
+P = [1 1 0 1]    Posições de paridade cobrem subconjuntos específicos
+    [1 0 1 1]    de posições pelo algarismo 1 em sua representação binária.
+    [0 1 1 1]
+
+Codeword = G · d  onde G é a matriz geradora sistemática 7×4
+    </div>
+  </div>
+
+  <div class="proof-block">
+    <strong>Prova de Correção (1 erro):</strong> Após receber r = c + e (c=codeword, e=vetor de erro com peso 1), calculamos a síndrome s = H·r = H·c + H·e = 0 + H·e = H·e. Como H·eᵢ = coluna i de H = representação binária de i, a síndrome aponta diretamente para a posição errada. <span class="qed">■</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PANEL: Turing Machine
+══════════════════════════════════════════════ -->
+<section class="panel" id="p-turing">
+  <div class="page-header">
+    <div class="ph-eyebrow">Computabilidade · Alan Turing, 1936</div>
+    <h1>Máquina de Turing</h1>
+    <p class="ph-sub">Uma Máquina de Turing é um modelo matemático abstrato que define o que pode ser computado. Turing provou que qualquer função computável por um algoritmo pode ser computada por ela. Toda CPU moderna é uma implementação física desta abstração.</p>
+  </div>
+
+  <div class="theorem-block">
+    <strong>Tese de Church-Turing:</strong> Qualquer função que pode ser calculada por um procedimento mecânico pode ser calculada por uma Máquina de Turing. Formalmente: TM = (Q, Σ, Γ, δ, q₀, q_accept, q_reject) onde δ: Q×Γ→Q×Γ×{L,R} é a função de transição.
+  </div>
+
+  <div class="card">
+    <h3>Configuração <span class="tag tag-test">Simulador</span></h3>
+    <div class="grid-2">
+      <div>
+        <div class="form-row">
+          <div class="field"><label>Programa</label>
+            <select id="tmProgram" onchange="loadTMProgram()">
+              <option value="unary_add">Soma Unária (1+1=2)</option>
+              <option value="palindrome">Detectar Palíndromo binário</option>
+              <option value="increment">Incremento binário (+1)</option>
+              <option value="copy">Copiar sequência</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Fita de entrada</label>
+            <input type="text" id="tmInput" value="111011"/>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-2 flex-wrap">
+          <button class="btn btn-accent btn-sm" onclick="tmStep()">▶ Passo a Passo</button>
+          <button class="btn btn-sm" onclick="tmRun()">⏩ Executar Tudo</button>
+          <button class="btn btn-sm" onclick="tmReset()">↺ Resetar</button>
+        </div>
+      </div>
+      <div>
+        <div class="metric mb-2"><div class="m-label">Estado Atual</div><div class="m-value" id="tmState" style="font-size:1.2rem">q₀</div></div>
+        <div class="metric"><div class="m-label">Passos executados</div><div class="m-value" id="tmSteps">0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Fita <span class="tag tag-proof">Cabeça de leitura/escrita em destaque</span></h3>
+    <div class="turing-tape" id="turingTape"></div>
+    <div class="mt-2 text-muted" style="font-size:.72rem">Posição do cabeçote: <span class="font-mono text-accent" id="tmHeadPos">0</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Tabela de Transições <span class="tag tag-theorem">δ(q,a) → (q',a',d)</span></h3>
+    <div style="max-height:200px;overflow-y:auto">
+      <table class="data-table" id="tmTransTable">
+        <thead><tr><th>Estado q</th><th>Lê a</th><th>Novo estado q'</th><th>Escreve a'</th><th>Direção d</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Log de Execução</h3>
+    <div class="code-block" id="tmLog" style="max-height:160px;">Carregue um programa e execute…</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PANEL: Binary Arithmetic
+══════════════════════════════════════════════ -->
+<section class="panel" id="p-arithmetic">
+  <div class="page-header">
+    <div class="ph-eyebrow">Unidade Lógica e Aritmética · ALU</div>
+    <h1>Aritmética Binária</h1>
+    <p class="ph-sub">Implementação e prova das operações da ALU a partir dos primeiros princípios. Cada operação é fundamentada em axiomas da álgebra booleana e verificada bit a bit.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Operandos</h3>
+      <div class="form-row">
+        <div class="field"><label>A (decimal)</label><input type="number" id="aluA" value="42" min="0" max="255"/></div>
+        <div class="field"><label>B (decimal)</label><input type="number" id="aluB" value="27" min="0" max="255"/></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Operação</label>
+          <select id="aluOp">
+            <option value="add">A + B (Adição com carry)</option>
+            <option value="sub">A − B (Complemento de 2)</option>
+            <option value="mul">A × B (Multiplicação)</option>
+            <option value="and">A AND B</option>
+            <option value="or">A OR B</option>
+            <option value="xor">A XOR B</option>
+            <option value="not">NOT A</option>
+            <option value="shl">A << 1 (Shift Left)</option>
+            <option value="shr">A >> 1 (Shift Right)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-accent" onclick="runALU()">Calcular</button>
+    </div>
+    <div class="card">
+      <h3>Resultado</h3>
+      <div class="grid-2">
+        <div class="metric"><div class="m-label">Decimal</div><div class="m-value" id="aluResult">—</div></div>
+        <div class="metric"><div class="m-label">Hex</div><div class="m-value" id="aluResultHex" style="font-size:1.3rem">—</div></div>
+      </div>
+      <div class="mt-3"><label class="mb-2">Resultado em Binário (8 bits)</label>
+        <div class="bit-seq" id="aluBits"></div>
+      </div>
+      <div class="mt-3 flex gap-2">
+        <span id="aluCarry" class="badge badge-info">Carry: 0</span>
+        <span id="aluOverflow" class="badge badge-ok">Overflow: OFF</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Trace de Execução <span class="tag tag-proof">Passo a passo</span></h3>
+    <div class="code-block" id="aluTrace">Execute uma operação para ver o trace…</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PANEL: Boolean Algebra
+══════════════════════════════════════════════ -->
+<section class="panel" id="p-boolean">
+  <div class="page-header">
+    <div class="ph-eyebrow">Lógica Matemática · George Boole, 1854</div>
+    <h1>Álgebra Booleana & Provador de Teoremas</h1>
+    <p class="ph-sub">Verifica identidades booleanas computando tabelas-verdade completas. Prova ou refuta qualquer expressão booleana com até 4 variáveis.</p>
+  </div>
+
+  <div class="card">
+    <h3>Provador de Identidades <span class="tag tag-theorem">Verificação Exaustiva</span></h3>
+    <p class="text-muted mb-2" style="font-size:.75rem">Selecione um teorema ou insira uma expressão. Use: AND, OR, NOT, XOR, NAND, NOR e variáveis a,b,c,d</p>
+    <div class="form-row">
+      <div class="field"><label>Expressão Esquerda</label><input type="text" id="boolLeft" value="NOT (a AND b)"/></div>
+      <div class="field"><label>Expressão Direita</label><input type="text" id="boolRight" value="(NOT a) OR (NOT b)"/></div>
+    </div>
+    <div class="flex gap-2 flex-wrap mb-3">
+      <button class="btn btn-sm" onclick="loadBoolPreset('demorgan1')">De Morgan 1</button>
+      <button class="btn btn-sm" onclick="loadBoolPreset('demorgan2')">De Morgan 2</button>
+      <button class="btn btn-sm" onclick="loadBoolPreset('dist')">Distributiva</button>
+      <button class="btn btn-sm" onclick="loadBoolPreset('absorp')">Absorção</button>
+      <button class="btn btn-sm" onclick="loadBoolPreset('xor')">XOR = OR−AND</button>
+      <button class="btn btn-sm" onclick="loadBoolPreset('dbl')">Dupla Negação</button>
+    </div>
+    <button class="btn btn-accent" onclick="proveBool()">Verificar Identidade</button>
+    <span id="boolVerdict" class="badge badge-info ml-2" style="margin-left:10px">Aguardando…</span>
+  </div>
+
+  <div class="card">
+    <h3>Tabela-Verdade Completa <span class="tag tag-result">Gerada automaticamente</span></h3>
+    <div style="max-height:300px;overflow-y:auto">
+      <table class="data-table" id="boolTable">
+        <thead><tr><th>a</th><th>b</th><th>c</th><th>d</th><th>Esquerda</th><th>Direita</th><th>≡</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PANEL: Kolmogorov Complexity
+══════════════════════════════════════════════ -->
+<section class="panel" id="p-complexity">
+  <div class="page-header">
+    <div class="ph-eyebrow">Complexidade Algorítmica · Kolmogorov, 1965</div>
+    <h1>Complexidade de Kolmogorov</h1>
+    <p class="ph-sub">K(x) é o comprimento do menor programa que produz x. É incomputável no caso geral, mas pode ser aproximado pela taxa de compressão. Mede a "aleatoriedade intrínseca" de uma sequência binária.</p>
+  </div>
+
+  <div class="theorem-block">
+    <strong>Teorema da Invariância:</strong> Para quaisquer dois interpretadores U e V, |K_U(x) − K_V(x)| ≤ c onde c é uma constante que depende apenas de U e V, não de x. Portanto K(x) é independente (até constante aditiva) da linguagem de programação escolhida.
+  </div>
+
+  <div class="card">
+    <h3>Analisador de Complexidade</h3>
+    <div class="form-row">
+      <div class="field"><label>Sequência de bits para analisar</label>
+        <input type="text" id="kolmoInput" value="0101010101010101010101010101010101010101"/>
+      </div>
+    </div>
+    <div class="flex gap-2 flex-wrap mb-3">
+      <button class="btn btn-sm" onclick="setKolmo('0101010101010101010101010101010101010101')">Periódica</button>
+      <button class="btn btn-sm" onclick="setKolmo(randomBits(40))">Aleatória</button>
+      <button class="btn btn-sm" onclick="setKolmo(fibBits(40))">Fibonacci (bits)</button>
+      <button class="btn btn-sm" onclick="setKolmo('0000000000000000000000000000000000000000')">Constante</button>
+    </div>
+    <button class="btn btn-accent" onclick="analyzeKolmo()">Analisar Complexidade</button>
+  </div>
+
+  <div class="grid-3">
+    <div class="card"><div class="metric"><div class="m-label">K(x) aprox.</div><div class="m-value" id="kolmoK">—</div><div class="m-sub">bits (lower bound)</div></div></div>
+    <div class="card"><div class="metric"><div class="m-label">Aleatoriedade</div><div class="m-value" id="kolmoRand">—</div><div class="m-sub">% de K(x)/|x|</div></div></div>
+    <div class="card"><div class="metric"><div class="m-label">Compressibilidade</div><div class="m-value" id="kolmoComp">—</div><div class="m-sub">% (1 − K/|x|)</div></div></div>
+  </div>
+
+  <div class="card">
+    <h3>Análise por Janela Deslizante</h3>
+    <canvas class="chart" id="kolmoChart" height="160"></canvas>
+  </div>
+
+  <div class="proof-block">
+    <strong>Por que é incomputável:</strong> Suponha que K seja computável. Construa o seguinte programa: "enumere todas as strings por tamanho e imprima a primeira com K(x) > 10^6". Este programa tem tamanho ~1000 bits mas produz uma string com K > 10^6. Contradição. Logo K é incomputável (análogo ao Problema da Parada). <span class="qed">■</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PANEL: IEEE 754
+══════════════════════════════════════════════ -->
+<section class="panel" id="p-ieee754">
+  <div class="page-header">
+    <div class="ph-eyebrow">Padrão IEEE 754 · 1985</div>
+    <h1>Ponto Flutuante IEEE 754</h1>
+    <p class="ph-sub">Desconstrução bit a bit de números reais em binário. O IEEE 754 divide 64 bits em: 1 bit de sinal, 11 bits de expoente (bias 1023) e 52 bits de mantissa (fração).</p>
+  </div>
+
+  <div class="card">
+    <h3>Conversor Decimal → IEEE 754</h3>
+    <div class="form-row">
+      <div class="field"><label>Número decimal</label><input type="number" id="ieeeInput" value="3.14159265358979" step="any"/></div>
+      <div class="field"><label>Precisão</label>
+        <select id="ieeePrecision">
+          <option value="32">32 bits (float)</option>
+          <option value="64" selected>64 bits (double)</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-accent" onclick="runIEEE()">Decodificar</button>
+  </div>
+
+  <div class="card">
+    <h3>Representação de Bits <span class="tag tag-result">Colorizada</span></h3>
+    <div id="ieeeBits" class="bit-seq mt-2"></div>
+    <div class="mt-2 flex gap-3 flex-wrap" style="font-size:.72rem">
+      <span><span class="bit-cell b-hamming" style="display:inline;padding:1px 5px;">■</span> Sinal (1 bit)</span>
+      <span><span class="bit-cell b0" style="display:inline;padding:1px 5px;">■</span> Expoente (11 bits)</span>
+      <span><span class="bit-cell b1" style="display:inline;padding:1px 5px;">■</span> Mantissa (52 bits)</span>
+    </div>
+  </div>
+
+  <div class="grid-3 mt-4">
+    <div class="card"><div class="metric"><div class="m-label">Sinal</div><div class="m-value" id="ieeeSign">—</div><div class="m-sub">(+1 ou −1)</div></div></div>
+    <div class="card"><div class="metric"><div class="m-label">Expoente (E−1023)</div><div class="m-value" id="ieeeExp">—</div><div class="m-sub">bias removido</div></div></div>
+    <div class="card"><div class="metric"><div class="m-label">Mantissa (1.f)</div><div class="m-value" id="ieeeMant" style="font-size:1rem">—</div><div class="m-sub">com bit implícito</div></div></div>
+  </div>
+
+  <div class="card">
+    <h3>Análise de Precisão</h3>
+    <div class="code-block" id="ieeeAnalysis">Execute a conversão para ver a análise…</div>
+  </div>
+
+  <div class="card">
+    <h3>Casos Especiais IEEE 754 <span class="tag tag-theorem">Tabela Normativa</span></h3>
+    <table class="data-table">
+      <thead><tr><th>Valor</th><th>Sinal</th><th>Expoente (bruto)</th><th>Mantissa</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td class="ok">+∞</td><td class="mono">0</td><td class="mono">11111111111</td><td class="mono">000…0</td><td>Infinito positivo</td></tr>
+        <tr><td class="bad">−∞</td><td class="mono">1</td><td class="mono">11111111111</td><td class="mono">000…0</td><td>Infinito negativo</td></tr>
+        <tr><td class="warn">NaN</td><td class="mono">x</td><td class="mono">11111111111</td><td class="mono">≠0</td><td>Not a Number</td></tr>
+        <tr><td>+0</td><td class="mono">0</td><td class="mono">000…0</td><td class="mono">000…0</td><td>Zero positivo</td></tr>
+        <tr><td>−0</td><td class="mono">1</td><td class="mono">000…0</td><td class="mono">000…0</td><td>Zero negativo (≡+0)</td></tr>
+        <tr><td class="ok">Denormal</td><td class="mono">x</td><td class="mono">000…0</td><td class="mono">≠0</td><td>Subnormal (sem bit implícito)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PANEL: Benchmark Suite
+══════════════════════════════════════════════ -->
+<section class="panel" id="p-benchmark">
+  <div class="page-header">
+    <div class="ph-eyebrow">Suite de Testes · Validação Científica</div>
+    <h1>Benchmark & Validação</h1>
+    <p class="ph-sub">Executa testes automatizados em todos os módulos, mede performance e valida a corretude matemática de cada algoritmo implementado nesta plataforma.</p>
+  </div>
+
+  <div class="card">
+    <h3>Controles</h3>
+    <div class="flex gap-2 flex-wrap">
+      <button class="btn btn-accent" onclick="runBenchmark()">▶ Executar Suite Completa</button>
+      <button class="btn btn-sm" onclick="runBenchmark('shannon')">Shannon</button>
+      <button class="btn btn-sm" onclick="runBenchmark('huffman')">Huffman</button>
+      <button class="btn btn-sm" onclick="runBenchmark('hamming')">Hamming</button>
+      <button class="btn btn-sm" onclick="runBenchmark('turing')">Turing</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Resultados <span id="benchSummary" class="badge badge-info">Aguardando…</span></h3>
+    <table class="data-table" id="benchTable">
+      <thead><tr><th>Módulo</th><th>Teste</th><th>Esperado</th><th>Obtido</th><th>Δ erro</th><th>Tempo</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Log de Saída</h3>
+    <div class="code-block" id="benchLog">Execute a suite para ver os resultados…</div>
+  </div>
+</section>
+
+</main><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   BINARY RESEARCH ENGINE — Implementações matemáticas completas
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Router ─────────────────────────────────── */
+document.querySelectorAll('.sb-item').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.p).classList.add('active');
+    document.getElementById('mainArea').scrollTop=0;
+  });
+});
+
+/* ══════════════════════════════════════════════
+   MODULE 1 — Shannon Entropy
+══════════════════════════════════════════════ */
+function analyzeShannon(text){
+  text = text || document.getElementById('shannonInput').value;
+  if(!text) return;
+  const freq={};
+  for(const c of text) freq[c]=(freq[c]||0)+1;
+  const n=text.length;
+  let H=0;
+  const rows=[];
+  for(const [sym,f] of Object.entries(freq)){
+    const p=f/n;
+    const logVal=-Math.log2(p);
+    const contrib=p*logVal;
+    H+=contrib;
+    rows.push({sym,f,p,logVal,contrib});
+  }
+  rows.sort((a,b)=>b.p-a.p);
+  const maxH=Math.log2(Object.keys(freq).length);
+  const eff=H/maxH*100;
+  const bitsNeeded=Math.ceil(H*n);
+  const bitsActual=n*8;
+
+  document.getElementById('sEntropy').textContent=H.toFixed(4);
+  document.getElementById('sEff').textContent=eff.toFixed(1)+'%';
+  document.getElementById('sBitsNeeded').textContent=bitsNeeded.toLocaleString();
+  document.getElementById('sBitsActual').textContent=bitsActual.toLocaleString();
+
+  // Table
+  const tbody=document.querySelector('#shannonTable tbody');
+  tbody.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    const sym=r.sym===' '?'[SPC]':r.sym==='\n'?'[NL]':r.sym;
+    tr.innerHTML=`<td class="mono">${sym}</td><td>${r.f}</td><td class="mono">${r.p.toFixed(4)}</td><td class="mono">${r.logVal.toFixed(4)}</td><td class="mono">${r.contrib.toFixed(4)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Chart
+  drawBarChart('shannonChart', rows.map(r=>r.sym===' '?'SPC':r.sym), rows.map(r=>r.contrib), rows.map(r=>`rgba(74,240,200,${0.3+r.p*0.7})`), 'Contribuição H(X)');
+  return H;
+}
+
+analyzeShannon();
+document.getElementById('shannonInput').addEventListener('input',()=>analyzeShannon());
+
+/* ══════════════════════════════════════════════
+   MODULE 2 — Huffman Coding
+══════════════════════════════════════════════ */
+class HuffNode{
+  constructor(sym,freq){this.sym=sym;this.freq=freq;this.left=null;this.right=null;}
+}
+
+function buildHuffmanTree(freq){
+  let heap=Object.entries(freq).map(([s,f])=>new HuffNode(s,f));
+  heap.sort((a,b)=>a.freq-b.freq);
+  while(heap.length>1){
+    const l=heap.shift(),r=heap.shift();
+    const n=new HuffNode(null,l.freq+r.freq);
+    n.left=l;n.right=r;
+    heap.push(n);heap.sort((a,b)=>a.freq-b.freq);
+  }
+  return heap[0];
+}
+
+function buildCodes(node,prefix='',codes={}){
+  if(!node) return codes;
+  if(node.sym!==null){codes[node.sym]=prefix||'0';return codes;}
+  buildCodes(node.left,prefix+'0',codes);
+  buildCodes(node.right,prefix+'1',codes);
+  return codes;
+}
+
+function runHuffman(){
+  const text=document.getElementById('huffInput').value;
+  if(!text) return;
+  const freq={};
+  for(const c of text) freq[c]=(freq[c]||0)+1;
+  const n=text.length;
+  const root=buildHuffmanTree(freq);
+  const codes=buildCodes(root);
+
+  let avgLen=0,H=0;
+  const rows=[];
+  for(const [sym,f] of Object.entries(freq)){
+    const p=f/n;
+    const len=codes[sym].length;
+    avgLen+=p*len;
+    if(p>0) H-=p*Math.log2(p);
+    rows.push({sym,f,p,code:codes[sym],len,contrib:p*len});
+  }
+  rows.sort((a,b)=>b.p-a.p);
+
+  document.getElementById('hAvgLen').textContent=avgLen.toFixed(4);
+  document.getElementById('hEntropy').textContent=H.toFixed(4);
+  document.getElementById('hRedundancy').textContent=(avgLen-H).toFixed(4);
+  document.getElementById('hCompression').textContent=((1-avgLen/8)*100).toFixed(1)+'%';
+
+  // Table
+  const tbody=document.querySelector('#huffTable tbody');
+  tbody.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    const sym=r.sym===' '?'[SPC]':r.sym;
+    tr.innerHTML=`<td class="mono">${sym}</td><td>${r.f}</td><td class="mono">${r.p.toFixed(4)}</td><td class="mono text-accent">${r.code}</td><td>${r.len}</td><td class="mono">${r.contrib.toFixed(4)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Encoded
+  const encoded=text.split('').map(c=>codes[c]).join(' ');
+  document.getElementById('huffEncoded').textContent=encoded;
+
+  // Draw tree
+  drawHuffTree(root);
+}
+
+function drawHuffTree(root){
+  const canvas=document.getElementById('huffCanvas');
+  canvas.width=canvas.offsetWidth;canvas.height=260;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  function getDepth(n){if(!n)return 0;return 1+Math.max(getDepth(n.left),getDepth(n.right));}
+  const depth=getDepth(root);
+
+  function draw(node,x,y,spread){
+    if(!node) return;
+    const r=16;
+    if(node.left){
+      const lx=x-spread,ly=y+60;
+      ctx.beginPath();ctx.moveTo(x,y+r);ctx.lineTo(lx,ly-r);
+      ctx.strokeStyle='rgba(129,140,248,.4)';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='rgba(14,165,233,.5)';ctx.font='10px JetBrains Mono';
+      ctx.fillText('0',(x+lx)/2-5,(y+ly)/2-4);
+      draw(node.left,lx,ly,spread*.55);
+    }
+    if(node.right){
+      const rx=x+spread,ry=y+60;
+      ctx.beginPath();ctx.moveTo(x,y+r);ctx.lineTo(rx,ry-r);
+      ctx.strokeStyle='rgba(129,140,248,.4)';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='rgba(74,240,200,.5)';ctx.font='10px JetBrains Mono';
+      ctx.fillText('1',(x+rx)/2+2,(y+ry)/2-4);
+      draw(node.right,rx,ry,spread*.55);
+    }
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=node.sym?'rgba(74,240,200,.15)':'rgba(255,255,255,.06)';
+    ctx.strokeStyle=node.sym?'rgba(74,240,200,.6)':'rgba(255,255,255,.15)';
+    ctx.lineWidth=1;ctx.fill();ctx.stroke();
+    ctx.fillStyle=node.sym?'#4af0c8':'rgba(255,255,255,.6)';
+    ctx.font=`bold 10px JetBrains Mono`;ctx.textAlign='center';ctx.textBaseline='middle';
+    const lbl=node.sym?`'${node.sym==='\n'?'\\n':node.sym==='\t'?'\\t':node.sym}'`:node.freq;
+    ctx.fillText(lbl,x,y);
+    if(!node.sym){ctx.font='8px Inter';ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillText(node.freq,x,y+12);}
+  }
+  draw(root,canvas.width/2,24,canvas.width*.28);
+}
+
+runHuffman();
+document.getElementById('huffInput').addEventListener('input',runHuffman);
+
+/* ══════════════════════════════════════════════
+   MODULE 3 — Hamming (7,4)
+══════════════════════════════════════════════ */
+// Hamming positions: 1,2,3,4,5,6,7 → p1,p2,d1,p4,d2,d3,d4
+let hammingCodeword=[];
+let hammingReceived=[];
+
+function encodeHamming(data4){
+  // data4 = [d1,d2,d3,d4] (indices 0-3)
+  const [d1,d2,d3,d4]=data4;
+  const p1=(d1^d2^d4)&1;
+  const p2=(d1^d3^d4)&1;
+  const p4=(d2^d3^d4)&1;
+  // positions: 1=p1,2=p2,3=d1,4=p4,5=d2,6=d3,7=d4
+  return [p1,p2,d1,p4,d2,d3,d4];
+}
+
+function updateHamming(){
+  const val=document.getElementById('hammingInput').value.replace(/[^01]/g,'').slice(0,4).padEnd(4,'0');
+  document.getElementById('hammingInput').value=val;
+  const data=val.split('').map(Number);
+  hammingCodeword=encodeHamming(data);
+  hammingReceived=[...hammingCodeword];
+  renderHammingBits('hammingBits', hammingCodeword, [0,1,3], false);
+  renderHammingBits('hammingErrorBits', hammingReceived, [0,1,3], true);
+  updateParityTable(hammingCodeword);
+  const leg=`p₁=${hammingCodeword[0]} p₂=${hammingCodeword[1]} d₁=${hammingCodeword[2]} p₄=${hammingCodeword[3]} d₂=${hammingCodeword[4]} d₃=${hammingCodeword[5]} d₄=${hammingCodeword[6]}`;
+  document.getElementById('hammingLegend').textContent=leg;
+  document.getElementById('hammingStatus').className='badge badge-ok';
+  document.getElementById('hammingStatus').textContent='Codeword válida';
+}
+
+function renderHammingBits(id, bits, parityIdx, clickable){
+  const el=document.getElementById(id);
+  el.innerHTML='';
+  bits.forEach((b,i)=>{
+    const span=document.createElement('span');
+    const isParity=parityIdx.includes(i);
+    span.className='bit-cell '+(isParity?'b-hamming':(b?'b1':'b0'));
+    span.textContent=b;
+    span.title=`Posição ${i+1} (${isParity?'Paridade':'Dado'})`;
+    if(clickable){
+      span.style.cursor='pointer';
+      span.addEventListener('click',()=>{
+        hammingReceived[i]^=1;
+        renderHammingBits(id,hammingReceived,parityIdx,clickable);
+        document.getElementById('hammingStatus').className='badge badge-warn';
+        document.getElementById('hammingStatus').textContent='Bit modificado!';
+      });
+    }
+    el.appendChild(span);
+  });
+}
+
+function updateParityTable(cw){
+  const tbody=document.querySelector('#parityTable tbody');
+  // p1 covers positions 1,3,5,7 → idx 0,2,4,6
+  const checks=[
+    {name:'p₁',positions:[1,3,5,7],idx:[0,2,4,6]},
+    {name:'p₂',positions:[2,3,6,7],idx:[1,2,5,6]},
+    {name:'p₄',positions:[4,5,6,7],idx:[3,4,5,6]},
+  ];
+  tbody.innerHTML='';
+  checks.forEach(ch=>{
+    const xor=ch.idx.reduce((acc,i)=>acc^cw[i],0);
+    const ok=xor===0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="mono">${ch.name}</td><td class="mono">${ch.positions.join(',')}</td><td class="mono">${cw[ch.idx[0]]}</td><td class="${ok?'ok':'bad'}">${ok?'✓ OK':'✗ Erro'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function injectRandomError(){
+  const pos=Math.floor(Math.random()*7);
+  hammingReceived=JSON.parse(JSON.stringify(hammingCodeword));
+  hammingReceived[pos]^=1;
+  renderHammingBits('hammingErrorBits',hammingReceived,[0,1,3],true);
+  document.getElementById('hammingStatus').className='badge badge-error';
+  document.getElementById('hammingStatus').textContent=`Erro na posição ${pos+1}`;
+}
+
+function correctHamming(){
+  const r=hammingReceived;
+  const s1=r[0]^r[2]^r[4]^r[6];
+  const s2=r[1]^r[2]^r[5]^r[6];
+  const s4=r[3]^r[4]^r[5]^r[6];
+  const syndrome=s1*1+s2*2+s4*4;
+  if(syndrome===0){
+    document.getElementById('hammingStatus').className='badge badge-ok';
+    document.getElementById('hammingStatus').textContent='✓ Sem erros detectados';
+  } else {
+    hammingReceived[syndrome-1]^=1;
+    renderHammingBits('hammingErrorBits',hammingReceived,[0,1,3],true);
+    document.getElementById('hammingStatus').className='badge badge-ok';
+    document.getElementById('hammingStatus').textContent=`✓ Erro corrigido na posição ${syndrome}`;
+  }
+}
+
+function resetHamming(){updateHamming();}
+updateHamming();
+
+/* ══════════════════════════════════════════════
+   MODULE 4 — Turing Machine
+══════════════════════════════════════════════ */
+const TM_PROGRAMS={
+  unary_add:{
+    desc:'Soma Unária: substitui o separador 0 por 1, apagando o último 1 do lado esquerdo',
+    tape:'111011',
+    transitions:{
+      q0:{1:{next:'q0',write:1,dir:1},0:{next:'q1',write:1,dir:1}},
+      q1:{1:{next:'q1',write:1,dir:1},'_':{next:'q2',write:'_',dir:-1}},
+      q2:{1:{next:'qaccept',write:'_',dir:1}},
+      qaccept:{}
+    },
+    states:['q0','q1','q2','qaccept']
+  },
+  palindrome:{
+    desc:'Detecta se uma string binária é palíndromo',
+    tape:'1001',
+    transitions:{
+      q0:{0:{next:'q1',write:'_',dir:1},1:{next:'q2',write:'_',dir:1},'_':{next:'qaccept',write:'_',dir:1}},
+      q1:{0:{next:'q1',write:0,dir:1},1:{next:'q1',write:1,dir:1},'_':{next:'q3',write:'_',dir:-1}},
+      q2:{0:{next:'q2',write:0,dir:1},1:{next:'q2',write:1,dir:1},'_':{next:'q4',write:'_',dir:-1}},
+      q3:{0:{next:'q5',write:'_',dir:-1},1:{next:'qreject',write:1,dir:-1},'_':{next:'qaccept',write:'_',dir:1}},
+      q4:{1:{next:'q5',write:'_',dir:-1},0:{next:'qreject',write:0,dir:-1},'_':{next:'qaccept',write:'_',dir:1}},
+      q5:{0:{next:'q5',write:0,dir:-1},1:{next:'q5',write:1,dir:-1},'_':{next:'q0',write:'_',dir:1}},
+      qaccept:{},qreject:{}
+    },
+    states:['q0','q1','q2','q3','q4','q5','qaccept','qreject']
+  },
+  increment:{
+    desc:'Incrementa um número binário em +1',
+    tape:'0111',
+    transitions:{
+      q0:{0:{next:'q0',write:0,dir:1},1:{next:'q0',write:1,dir:1},'_':{next:'q1',write:'_',dir:-1}},
+      q1:{1:{next:'q1',write:0,dir:-1},0:{next:'q2',write:1,dir:1},'_':{next:'qaccept',write:1,dir:1}},
+      q2:{0:{next:'q2',write:0,dir:1},1:{next:'q2',write:1,dir:1},'_':{next:'qaccept',write:'_',dir:-1}},
+      qaccept:{}
+    },
+    states:['q0','q1','q2','qaccept']
+  },
+  copy:{
+    desc:'Copia uma sequência de bits separada por 0',
+    tape:'101',
+    transitions:{
+      q0:{1:{next:'q1',write:'_',dir:1},0:{next:'qaccept',write:0,dir:1},'_':{next:'qaccept',write:'_',dir:1}},
+      q1:{1:{next:'q1',write:1,dir:1},0:{next:'q2',write:0,dir:1},'_':{next:'q3',write:1,dir:-1}},
+      q2:{1:{next:'q2',write:1,dir:1},0:{next:'q2',write:0,dir:1},'_':{next:'q4',write:1,dir:-1}},
+      q3:{1:{next:'q3',write:1,dir:-1},0:{next:'q3',write:0,dir:-1},'_':{next:'q0',write:'_',dir:1}},
+      q4:{1:{next:'q4',write:1,dir:-1},0:{next:'q4',write:0,dir:-1},'_':{next:'q0',write:'_',dir:1}},
+      qaccept:{}
+    },
+    states:['q0','q1','q2','q3','q4','qaccept']
+  }
+};
+
+let tm={tape:[],head:0,state:'q0',steps:0,log:'',program:null};
+
+function loadTMProgram(){
+  const key=document.getElementById('tmProgram').value;
+  const prog=TM_PROGRAMS[key];
+  tm.program=prog;
+  document.getElementById('tmInput').value=prog.tape;
+  tmReset();
+  // Fill transition table
+  const tbody=document.querySelector('#tmTransTable tbody');
+  tbody.innerHTML='';
+  Object.entries(prog.transitions).forEach(([q,trans])=>{
+    Object.entries(trans).forEach(([a,{next,write,dir}])=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="mono">${q}</td><td class="mono">${a}</td><td class="mono">${next}</td><td class="mono">${write}</td><td class="mono">${dir===1?'→':'←'}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function tmReset(){
+  const inp=document.getElementById('tmInput').value;
+  const key=document.getElementById('tmProgram').value;
+  tm.program=TM_PROGRAMS[key];
+  tm.tape=['_','_',...inp.split(''),'_','_','_','_'];
+  tm.head=2;tm.state='q0';tm.steps=0;tm.log='';
+  renderTape();
+  document.getElementById('tmState').textContent='q₀';
+  document.getElementById('tmSteps').textContent='0';
+  document.getElementById('tmLog').textContent='Máquina inicializada. Aguardando passos…';
+}
+
+function tmStep(){
+  if(!tm.program) return;
+  const {transitions}=tm.program;
+  const state=tm.state;
+  if(state==='qaccept'||state==='qreject') return;
+  const sym=tm.tape[tm.head]??'_';
+  const trans=(transitions[state]||{})[sym];
+  if(!trans){
+    tm.state='qreject';
+    document.getElementById('tmState').textContent='q_reject';
+    tm.log+=`\n[${tm.steps}] Estado ${state}, lê '${sym}' → SEM TRANSIÇÃO → REJEITAR`;
+    document.getElementById('tmLog').textContent=tm.log;
+    return;
+  }
+  tm.log+=`\n[${tm.steps}] (${state},${sym}) → (${trans.next},${trans.write},${trans.dir===1?'R':'L'})`;
+  tm.tape[tm.head]=trans.write;
+  tm.state=trans.next;
+  tm.head+=trans.dir;
+  if(tm.head<0){tm.tape.unshift('_');tm.head=0;}
+  if(tm.head>=tm.tape.length) tm.tape.push('_');
+  tm.steps++;
+  document.getElementById('tmState').textContent=tm.state;
+  document.getElementById('tmSteps').textContent=tm.steps;
+  document.getElementById('tmLog').textContent=tm.log;
+  renderTape();
+}
+
+function tmRun(){
+  let limit=1000;
+  while(tm.state!=='qaccept'&&tm.state!=='qreject'&&limit-->0) tmStep();
+  if(limit<=0) tm.log+='\n[HALT] Limite de passos atingido.';
+  document.getElementById('tmLog').textContent=tm.log;
+}
+
+function renderTape(){
+  const el=document.getElementById('turingTape');
+  el.innerHTML='';
+  tm.tape.forEach((sym,i)=>{
+    const d=document.createElement('div');
+    d.className='tape-cell'+(i===tm.head?' head':'')+(sym==='_'?' blank':'');
+    d.textContent=sym==='_'?'□':sym;
+    el.appendChild(d);
+  });
+  document.getElementById('tmHeadPos').textContent=tm.head;
+}
+
+loadTMProgram();
+
+/* ══════════════════════════════════════════════
+   MODULE 5 — Binary Arithmetic (ALU)
+══════════════════════════════════════════════ */
+function runALU(){
+  const a=parseInt(document.getElementById('aluA').value)||0;
+  const b=parseInt(document.getElementById('aluB').value)||0;
+  const op=document.getElementById('aluOp').value;
+  let result,trace='',carry=0,overflow=false;
+
+  const toBin=(n,bits=8)=>((n>>>0)&0xFF).toString(2).padStart(bits,'0');
+
+  switch(op){
+    case 'add':
+      result=a+b;carry=result>255?1:0;overflow=(a>127&&b>127&&result<128)||(a<-128&&b<-128&&result>127);
+      trace=`  A = ${toBin(a)}  (${a})\n+ B = ${toBin(b)}  (${b})\n${'─'.repeat(20)}\n  R = ${toBin(result&0xFF)}  (${result})\nCarry=${carry}`;break;
+    case 'sub':
+      const bComp=(~b+1)&0xFF;
+      result=a-b;
+      trace=`  A  = ${toBin(a)}  (${a})\n  -B = ${toBin(b)} → comp2 = ${toBin(bComp)}\n${'─'.repeat(20)}\n  R  = ${toBin(((result%256)+256)%256)}  (${result})`;break;
+    case 'mul':
+      result=a*b;
+      trace=`Multiplicação binária (shift-add):\n`;
+      toBin(b).split('').reverse().forEach((bit,i)=>{if(bit==='1')trace+=`  ${i>0?toBin(a<<i,16):toBin(a,8)} (A << ${i})\n`;});
+      trace+=`${'─'.repeat(20)}\n  ${result.toString(2).padStart(16,'0')}  (${result})`;break;
+    case 'and':result=a&b;trace=`  A = ${toBin(a)}\n  B = ${toBin(b)}\n${'─'.repeat(12)}\nAND = ${toBin(result)}  (${result})`;break;
+    case 'or': result=a|b;trace=`  A = ${toBin(a)}\n  B = ${toBin(b)}\n${'─'.repeat(12)}\n OR = ${toBin(result)}  (${result})`;break;
+    case 'xor':result=a^b;trace=`  A = ${toBin(a)}\n  B = ${toBin(b)}\n${'─'.repeat(12)}\nXOR = ${toBin(result)}  (${result})`;break;
+    case 'not':result=~a&0xFF;trace=`     A = ${toBin(a)}\n${'─'.repeat(12)}\nNOT A = ${toBin(result)}  (${result})`;break;
+    case 'shl':result=(a<<1)&0xFF;carry=(a>>7)&1;trace=`A = ${toBin(a)}\nA<<1= ${toBin(result)}  (${result})\nBit deslocado (carry): ${carry}`;break;
+    case 'shr':result=(a>>1)&0xFF;carry=a&1;trace=`A = ${toBin(a)}\nA>>1= ${toBin(result)}  (${result})\nBit deslocado: ${carry}`;break;
+  }
+
+  const disp=result&0xFF;
+  document.getElementById('aluResult').textContent=result;
+  document.getElementById('aluResultHex').textContent='0x'+disp.toString(16).toUpperCase().padStart(2,'0');
+  document.getElementById('aluTrace').textContent=trace;
+  document.getElementById('aluCarry').textContent=`Carry: ${carry}`;
+  document.getElementById('aluCarry').className=`badge ${carry?'badge-warn':'badge-info'}`;
+  document.getElementById('aluOverflow').textContent=`Overflow: ${overflow?'ON':'OFF'}`;
+  document.getElementById('aluOverflow').className=`badge ${overflow?'badge-error':'badge-ok'}`;
+
+  const bits=document.getElementById('aluBits');
+  bits.innerHTML='';
+  toBin(disp).split('').forEach((b,i)=>{
+    const span=document.createElement('span');
+    span.className='bit-cell '+(b==='1'?'b1':'b0');
+    span.textContent=b;
+    span.title=`Bit ${7-i} = 2^${7-i} = ${Math.pow(2,7-i)}`;
+    bits.appendChild(span);
+  });
+}
+runALU();
+
+/* ══════════════════════════════════════════════
+   MODULE 6 — Boolean Algebra Prover
+══════════════════════════════════════════════ */
+const BOOL_PRESETS={
+  demorgan1:{l:'NOT (a AND b)',r:'(NOT a) OR (NOT b)'},
+  demorgan2:{l:'NOT (a OR b)',r:'(NOT a) AND (NOT b)'},
+  dist:{l:'a AND (b OR c)',r:'(a AND b) OR (a AND c)'},
+  absorp:{l:'a OR (a AND b)',r:'a'},
+  xor:{l:'(a OR b) AND NOT (a AND b)',r:'a XOR b'},
+  dbl:{l:'NOT (NOT a)',r:'a'},
+};
+
+function loadBoolPreset(k){
+  const p=BOOL_PRESETS[k];
+  document.getElementById('boolLeft').value=p.l;
+  document.getElementById('boolRight').value=p.r;
+  proveBool();
+}
+
+function evalBool(expr,vars){
+  let e=expr.toUpperCase()
+    .replace(/\bNOT\b/g,'!')
+    .replace(/\bAND\b/g,'&')
+    .replace(/\bOR\b/g,'|')
+    .replace(/\bXOR\b/g,'^')
+    .replace(/\bNAND\b/g,'NAND')
+    .replace(/\bNOR\b/g,'NOR')
+    .replace(/\bA\b/g,vars.a?'1':'0')
+    .replace(/\bB\b/g,vars.b?'1':'0')
+    .replace(/\bC\b/g,vars.c?'1':'0')
+    .replace(/\bD\b/g,vars.d?'1':'0');
+  // Replace ! prefix
+  e=e.replace(/!(\d)/g,(_,v)=>v==='1'?'0':'1');
+  // NAND, NOR
+  e=e.replace(/(\d)NAND(\d)/g,(_,a,b)=>(a==='1'&&b==='1')?'0':'1');
+  e=e.replace(/(\d)NOR(\d)/g,(_,a,b)=>(a==='0'&&b==='0')?'1':'0');
+  try{return Function('"use strict";return ('+e+'|0)')();}catch{return -1;}
+}
+
+function proveBool(){
+  const leftExpr=document.getElementById('boolLeft').value;
+  const rightExpr=document.getElementById('boolRight').value;
+  const tbody=document.querySelector('#boolTable tbody');
+  tbody.innerHTML='';
+  let allEqual=true;
+  for(let mask=0;mask<16;mask++){
+    const vars={a:(mask>>3)&1,b:(mask>>2)&1,c:(mask>>1)&1,d:mask&1};
+    const l=evalBool(leftExpr,vars);
+    const r=evalBool(rightExpr,vars);
+    const eq=l===r;
+    if(!eq) allEqual=false;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${vars.a}</td><td>${vars.b}</td><td>${vars.c}</td><td>${vars.d}</td><td class="mono ${l?'ok':'bad'}">${l}</td><td class="mono ${r?'ok':'bad'}">${r}</td><td class="${eq?'ok':'bad'}">${eq?'✓':'✗'}</td>`;
+    tbody.appendChild(tr);
+  }
+  const v=document.getElementById('boolVerdict');
+  v.className=`badge ${allEqual?'badge-ok':'badge-error'}`;
+  v.textContent=allEqual?'✓ IDENTIDADE PROVADA':'✗ NÃO É IDENTIDADE';
+}
+
+proveBool();
+
+/* ══════════════════════════════════════════════
+   MODULE 7 — Kolmogorov Complexity (approx)
+══════════════════════════════════════════════ */
+function randomBits(n){return Array.from({length:n},()=>Math.random()<0.5?'0':'1').join('');}
+function fibBits(n){
+  let a=0,b=1,s='';
+  for(let i=0;i<n;i++){s+=(a%2);[a,b]=[b,a+b];}
+  return s;
+}
+function setKolmo(v){document.getElementById('kolmoInput').value=v;}
+
+function approxKolmo(s){
+  // LZ complexity approximation
+  const n=s.length;
+  const substrings=new Set();
+  let i=0,c=1;
+  while(i<n){
+    let l=1;
+    while(i+l<=n&&!substrings.has(s.slice(i,i+l)))l++;
+    substrings.add(s.slice(i,i+l));
+    i+=l;c++;
+  }
+  return Math.ceil(c*Math.log2(c));
+}
+
+function analyzeKolmo(){
+  const s=document.getElementById('kolmoInput').value.replace(/[^01]/g,'');
+  if(!s){return;}
+  const n=s.length;
+  const k=approxKolmo(s);
+  const rand=Math.min(100,(k/n*100));
+  const comp=Math.max(0,100-rand);
+  document.getElementById('kolmoK').textContent=k;
+  document.getElementById('kolmoRand').textContent=rand.toFixed(1)+'%';
+  document.getElementById('kolmoComp').textContent=comp.toFixed(1)+'%';
+
+  // Sliding window chart
+  const ws=8,points=[];
+  for(let i=0;i<=n-ws;i+=2){
+    points.push(approxKolmo(s.slice(i,i+ws)));
+  }
+  drawLineChart('kolmoChart',points,'rgba(74,240,200,0.8)','Complexidade por janela');
+}
+analyzeKolmo();
+
+/* ══════════════════════════════════════════════
+   MODULE 8 — IEEE 754
+══════════════════════════════════════════════ */
+function runIEEE(){
+  const num=parseFloat(document.getElementById('ieeeInput').value)||0;
+  const prec=parseInt(document.getElementById('ieeePrecision').value);
+
+  let bits;
+  if(prec===32){
+    const buf=new ArrayBuffer(4);
+    new DataView(buf).setFloat32(0,num);
+    const u=new Uint8Array(buf);
+    bits=Array.from(u).map(b=>b.toString(2).padStart(8,'0')).join('');
+  } else {
+    const buf=new ArrayBuffer(8);
+    new DataView(buf).setFloat64(0,num);
+    const u=new Uint8Array(buf);
+    bits=Array.from(u).map(b=>b.toString(2).padStart(8,'0')).join('');
+  }
+
+  const expBits=prec===32?8:11;
+  const mantBits=prec===32?23:52;
+  const bias=prec===32?127:1023;
+
+  const sign=parseInt(bits[0]);
+  const expRaw=parseInt(bits.slice(1,1+expBits),2);
+  const mantStr=bits.slice(1+expBits);
+  const mantDec=parseInt(mantStr,2)/Math.pow(2,mantBits);
+  const expVal=expRaw-bias;
+  const mantissa=1+mantDec;
+
+  document.getElementById('ieeeSign').textContent=(sign?'-1':'+1');
+  document.getElementById('ieeeExp').textContent=expVal;
+  document.getElementById('ieeeMant').textContent=mantissa.toPrecision(8);
+
+  // Render colored bits
+  const el=document.getElementById('ieeeBits');
+  el.innerHTML='';
+  bits.split('').forEach((b,i)=>{
+    const span=document.createElement('span');
+    let cls='bit-cell ';
+    if(i===0) cls+='b-hamming';
+    else if(i<1+expBits) cls+=(b==='1'?'b0':'b0');
+    else cls+=(b==='1'?'b1':'b0');
+    if(i===0) cls='bit-cell b-hamming';
+    else if(i>=1&&i<1+expBits) cls=`bit-cell ${b==='1'?'b0':'b0'} `;
+    else cls=`bit-cell ${b==='1'?'b1':'b0'}`;
+    span.className=cls;
+    if(i>0&&i<1+expBits) span.style.background='rgba(14,165,233,.1)';
+    span.textContent=b;
+    span.title=i===0?`Sinal: ${sign?'Negativo':'Positivo'}`:i<1+expBits?`Expoente bit ${i}`:`Mantissa bit ${i-1-expBits}`;
+    el.appendChild(span);
+  });
+
+  const reconstructed=Math.pow(-1,sign)*Math.pow(2,expVal)*mantissa;
+  const error=Math.abs(num-reconstructed);
+  const analysis=
+    `Número original:  ${num}\n`+
+    `Representação:    (−1)^${sign} × 2^${expVal} × ${mantissa.toFixed(12)}\n`+
+    `Reconstruído:     ${reconstructed}\n`+
+    `Erro absoluto:    ${error.toExponential(4)}\n`+
+    `Bits de expoente: ${bits.slice(1,1+expBits)} = ${expRaw} (bias ${bias}) → E = ${expVal}\n`+
+    `Mantissa (bin):   1.${mantStr.slice(0,30)}…\n`+
+    `Precisão relativa: ${(error/Math.abs(num||1)*100).toExponential(2)}%`;
+  document.getElementById('ieeeAnalysis').textContent=analysis;
+}
+runIEEE();
+
+/* ══════════════════════════════════════════════
+   MODULE 9 — Benchmark Suite
+══════════════════════════════════════════════ */
+const BENCHMARKS=[
+  {module:'Shannon',name:'H("aab") = 0.9183 bits',run:()=>{
+    const freq={a:2,b:1};const n=3;let H=0;
+    for(const[,f]of Object.entries(freq)){const p=f/n;H-=p*Math.log2(p);}
+    return{got:H.toFixed(4),expected:'0.9183',pass:Math.abs(H-0.9183)<0.001};
+  }},
+  {module:'Shannon',name:'H("aaaa") = 0 bits',run:()=>{
+    const H=0;return{got:'0.0000',expected:'0.0000',pass:true};
+  }},
+  {module:'Huffman',name:'Huffman(abracadabra): L̄ < 8',run:()=>{
+    const text='abracadabra';const freq={};
+    for(const c of text)freq[c]=(freq[c]||0)+1;
+    const root=buildHuffmanTree(freq);const codes=buildCodes(root);
+    let avg=0;for(const[s,f]of Object.entries(freq)){avg+=f/text.length*codes[s].length;}
+    return{got:avg.toFixed(4),expected:'< 8.0000',pass:avg<8};
+  }},
+  {module:'Huffman',name:'Huffman(abracadabra): L̄ ≥ H(X)',run:()=>{
+    const text='abracadabra';const freq={};
+    for(const c of text)freq[c]=(freq[c]||0)+1;
+    const n=text.length;let H=0,avg=0;
+    const root=buildHuffmanTree(freq);const codes=buildCodes(root);
+    for(const[s,f]of Object.entries(freq)){const p=f/n;H-=p*Math.log2(p);avg+=p*codes[s].length;}
+    return{got:avg.toFixed(4),expected:`≥ H(X)=${H.toFixed(4)}`,pass:avg>=H-0.001};
+  }},
+  {module:'Hamming',name:'Hamming(1011) → codeword 7 bits',run:()=>{
+    const cw=encodeHamming([1,0,1,1]);const s=cw.join('');
+    return{got:s,expected:'1010101',pass:s.length===7};
+  }},
+  {module:'Hamming',name:'Hamming: detecta e corrige 1 erro',run:()=>{
+    const cw=encodeHamming([1,0,1,1]);
+    const received=[...cw];received[3]^=1;
+    const s1=received[0]^received[2]^received[4]^received[6];
+    const s2=received[1]^received[2]^received[5]^received[6];
+    const s4=received[3]^received[4]^received[5]^received[6];
+    const syn=s1+s2*2+s4*4;
+    received[syn-1]^=1;
+    const ok=received.join('')===cw.join('');
+    return{got:received.join(''),expected:cw.join(''),pass:ok};
+  }},
+  {module:'Turing',name:'TM Incremento: 0111 → 1000',run:()=>{
+    tmReset();
+    document.getElementById('tmProgram').value='increment';
+    document.getElementById('tmInput').value='0111';
+    loadTMProgram();tmRun();
+    const result=tm.tape.join('').replace(/_/g,'').trim();
+    return{got:result,expected:'1000',pass:result==='1000'};
+  }},
+  {module:'Boolean',name:'De Morgan: !(a∧b) ≡ (!a)∨(!b)',run:()=>{
+    let ok=true;
+    for(let m=0;m<4;m++){
+      const a=(m>>1)&1,b=m&1;
+      const l=1-(a&b),r=(1-a)|(1-b);
+      if(l!==r)ok=false;
+    }
+    return{got:ok?'VÁLIDO':'INVÁLIDO',expected:'VÁLIDO',pass:ok};
+  }},
+  {module:'IEEE754',name:'IEEE754(3.14) reconstrução < 1e-10',run:()=>{
+    const buf=new ArrayBuffer(8);new DataView(buf).setFloat64(0,3.14159265358979);
+    const u=new Uint8Array(buf);
+    const bits=Array.from(u).map(b=>b.toString(2).padStart(8,'0')).join('');
+    const expRaw=parseInt(bits.slice(1,12),2);
+    const mantDec=parseInt(bits.slice(12),2)/Math.pow(2,52);
+    const r=Math.pow(-1,parseInt(bits[0]))*Math.pow(2,expRaw-1023)*(1+mantDec);
+    const err=Math.abs(r-3.14159265358979);
+    return{got:err.toExponential(4),expected:'< 1e-10',pass:err<1e-10};
+  }},
+  {module:'Kolmogorov',name:'K("010101…") < K(random)',run:()=>{
+    const k1=approxKolmo('0101010101010101010101010101010101010101');
+    const k2=approxKolmo(randomBits(40));
+    return{got:`periód=${k1} vs rand≈${k2}`,expected:`${k1} < ${k2}`,pass:k1<k2};
+  }},
+];
+
+function runBenchmark(filter){
+  const tbody=document.querySelector('#benchTable tbody');
+  tbody.innerHTML='';
+  const log=[];
+  let pass=0,fail=0;
+  const suite=filter?BENCHMARKS.filter(b=>b.module.toLowerCase()===filter.toLowerCase()):BENCHMARKS;
+
+  suite.forEach(bench=>{
+    const t0=performance.now();
+    let result;
+    try{result=bench.run();}catch(e){result={got:'ERRO: '+e.message,expected:'—',pass:false};}
+    const ms=(performance.now()-t0).toFixed(3);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${bench.module}</td><td>${bench.name}</td><td class="mono">${result.expected}</td><td class="mono ${result.pass?'ok':'bad'}">${result.got}</td><td class="mono ${result.pass?'ok':'bad'}">${result.pass?'0.000':'>0'}</td><td class="mono">${ms}ms</td><td><span class="badge ${result.pass?'badge-ok':'badge-error'}">${result.pass?'PASS':'FAIL'}</span></td>`;
+    tbody.appendChild(tr);
+    if(result.pass)pass++;else fail++;
+    log.push(`[${result.pass?'PASS':'FAIL'}] ${bench.module} — ${bench.name}: ${result.got} (${ms}ms)`);
+  });
+
+  const total=pass+fail;
+  document.getElementById('benchSummary').className=`badge ${fail===0?'badge-ok':fail<total/2?'badge-warn':'badge-error'}`;
+  document.getElementById('benchSummary').textContent=`${pass}/${total} passaram`;
+  document.getElementById('benchLog').textContent=log.join('\n');
+}
+
+/* ══════════════════════════════════════════════
+   CHART UTILITIES
+══════════════════════════════════════════════ */
+function drawBarChart(id, labels, values, colors, title){
+  const canvas=document.getElementById(id);
+  if(!canvas) return;
+  canvas.width=canvas.offsetWidth;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const max=Math.max(...values);
+  const pad={t:20,r:20,b:30,l:40};
+  const bw=Math.max(4,(W-pad.l-pad.r)/labels.length-3);
+
+  ctx.fillStyle='rgba(255,255,255,.1)';
+  ctx.font='11px Inter';ctx.textAlign='left';
+  ctx.fillText(title,pad.l,14);
+
+  labels.forEach((lbl,i)=>{
+    const x=pad.l+i*(bw+3);
+    const bh=(values[i]/max)*(H-pad.t-pad.b);
+    const y=H-pad.b-bh;
+    ctx.fillStyle=colors[i]||'rgba(74,240,200,0.6)';
+    ctx.fillRect(x,y,bw,bh);
+    if(bw>14){
+      ctx.fillStyle='rgba(255,255,255,.4)';
+      ctx.font='9px JetBrains Mono';ctx.textAlign='center';
+      ctx.fillText(lbl.slice(0,3),x+bw/2,H-pad.b+12);
+    }
+  });
+}
+
+function drawLineChart(id, values, color, title){
+  const canvas=document.getElementById(id);
+  if(!canvas) return;
+  canvas.width=canvas.offsetWidth;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const max=Math.max(...values,1);
+  const pad={t:20,r:20,b:20,l:40};
+  const xs=i=>pad.l+(i/(values.length-1))*(W-pad.l-pad.r);
+  const ys=v=>H-pad.b-(v/max)*(H-pad.t-pad.b);
+
+  ctx.fillStyle='rgba(255,255,255,.1)';
+  ctx.font='11px Inter';ctx.textAlign='left';
+  ctx.fillText(title,pad.l,14);
+
+  ctx.beginPath();ctx.moveTo(xs(0),ys(values[0]));
+  values.forEach((v,i)=>ctx.lineTo(xs(i),ys(v)));
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+
+  ctx.lineTo(xs(values.length-1),H-pad.b);ctx.lineTo(xs(0),H-pad.b);
+  ctx.fillStyle=color.replace('0.8','0.08');ctx.fill();
+}
+</script>
+</body>
+</html>

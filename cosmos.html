@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>COSMOS — Matéria, Consciência & Espaço-Tempo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,400&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+  <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000000;
+  --font:'Inter',sans-serif;
+  --serif:'Playfair Display',Georgia,serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;}
+canvas#c{position:fixed;inset:0;display:block;z-index:0;}
+
+/* ── Overlay HUD ─────────────────────────────── */
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none;}
+
+/* ── Mode selector (center-top pill) ─────────── */
+.mode-bar{
+  position:absolute;top:28px;left:50%;transform:translateX(-50%);
+  display:flex;gap:2px;align-items:center;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:50px;padding:5px;
+  pointer-events:all;
+  backdrop-filter:blur(16px);
+}
+.mode-pill{
+  padding:8px 22px;border-radius:50px;
+  font-family:var(--font);font-size:.76rem;font-weight:500;
+  cursor:pointer;color:rgba(255,255,255,.45);
+  border:none;background:transparent;
+  transition:all .25s;letter-spacing:.03em;
+}
+.mode-pill.active{
+  background:rgba(255,255,255,.1);
+  color:#fff;
+}
+
+/* ── Title (top-left) ────────────────────────── */
+.title-block{
+  position:absolute;top:28px;left:32px;
+  font-family:var(--serif);font-size:1rem;
+  color:rgba(255,255,255,.35);
+  font-style:italic;
+}
+
+/* ── Stats (top-right) ───────────────────────── */
+.stats-block{
+  position:absolute;top:28px;right:32px;
+  font-family:var(--mono);font-size:.68rem;
+  color:rgba(255,255,255,.3);
+  text-align:right;line-height:1.9;
+}
+.stats-block span{color:rgba(255,255,255,.7);}
+
+/* ── Concept text (center) ───────────────────── */
+.concept{
+  position:absolute;left:50%;bottom:120px;
+  transform:translateX(-50%);
+  text-align:center;max-width:520px;
+  opacity:0;transition:opacity .8s;
+}
+.concept.visible{opacity:1;}
+.concept h2{
+  font-family:var(--serif);font-size:1.3rem;
+  font-weight:400;color:rgba(255,255,255,.9);
+  margin-bottom:10px;line-height:1.4;
+}
+.concept p{
+  font-family:var(--font);font-size:.78rem;
+  color:rgba(255,255,255,.45);line-height:1.75;
+}
+
+/* ── Bottom controls ─────────────────────────── */
+.bottom-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:20px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+  pointer-events:all;
+}
+.ctrl-group{display:flex;gap:8px;flex-wrap:wrap;}
+.ctrl{
+  padding:8px 16px;border-radius:8px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.75);
+  font-family:var(--font);font-size:.76rem;
+  cursor:pointer;transition:all .18s;
+  backdrop-filter:blur(8px);
+}
+.ctrl:hover{background:rgba(255,255,255,.12);color:#fff;}
+.ctrl.on{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff;}
+
+.back-link{font-family:var(--font);font-size:.75rem;color:rgba(255,255,255,.35);text-decoration:none;}
+.back-link:hover{color:#fff;}
+
+/* ── Loading ─────────────────────────────────── */
+#loading{
+  position:fixed;inset:0;z-index:100;
+  background:#000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;transition:opacity .8s;
+}
+.load-text{font-family:var(--serif);font-size:1.5rem;font-style:italic;color:rgba(255,255,255,.5);}
+.load-sub{font-family:var(--mono);font-size:.7rem;color:rgba(255,255,255,.2);letter-spacing:.1em;}
+.load-line{
+  width:200px;height:1px;background:rgba(255,255,255,.1);
+  position:relative;overflow:hidden;
+}
+.load-line::after{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:rgba(255,255,255,.6);animation:loadSlide 1.2s infinite;
+}
+@keyframes loadSlide{to{left:100%}}
+
+/* ── Pulse ring ──────────────────────────────── */
+.pulse-ring{
+  position:absolute;border-radius:50%;
+  border:1px solid rgba(255,255,255,.1);
+  animation:pulseOut 3s infinite;
+  pointer-events:none;
+}
+@keyframes pulseOut{
+  0%{transform:scale(0);opacity:.6}
+  100%{transform:scale(3);opacity:0}
+}
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="load-text">COSMOS</div>
+  <div class="load-line"></div>
+  <div class="load-sub">compilando realidade…</div>
+</div>
+
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div class="title-block">Binary Universe</div>
+
+  <div class="mode-bar">
+    <button class="mode-pill active" data-mode="0">Matéria Viva</button>
+    <button class="mode-pill" data-mode="1">Omninet</button>
+    <button class="mode-pill" data-mode="2">Espaço-Tempo</button>
+  </div>
+
+  <div class="stats-block" id="stats">
+    Átomos: <span id="sAtoms">—</span><br>
+    Estado: <span id="sState">—</span><br>
+    Intenção: <span id="sIntent">nula</span>
+  </div>
+
+  <div class="concept" id="concept">
+    <h2 id="cTitle"></h2>
+    <p id="cDesc"></p>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="ctrl-group">
+      <button class="ctrl on" id="btnIntent">⬤ Campo de Intenção</button>
+      <button class="ctrl" id="btnWave">◎ Onda de Impulso</button>
+      <button class="ctrl" id="btnFlip">⟳ Inverter Bits</button>
+      <button class="ctrl" id="btnReset">↺ Resetar</button>
+    </div>
+    <a class="back-link" href="research.html">← Plataforma de Pesquisa</a>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   COSMOS ENGINE — Matéria Programável & Espaço-Tempo
+   ═══════════════════════════════════════════════ */
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let W = canvas.width  = innerWidth;
+let H = canvas.height = innerHeight;
+
+/* ── Global state ─────────────────────────────── */
+let mode = 0;
+let intentionOn = true;
+let mouse = { x: W/2, y: H/2, active: false };
+let time = 0;
+let raf;
+
+/* ── Concepts per mode ────────────────────────── */
+const CONCEPTS = [
+  {
+    title: 'A Matéria Programável & Consciente',
+    desc:  'Cada ponto de luz é um átomo-bit ativo. Mova o cursor para exercer intenção sobre a matéria — cada átomo responde, reconfigura-se e propaga a mudança para seus vizinhos, reescrevendo a realidade física em tempo real.'
+  },
+  {
+    title: 'O Omninet — Rede de Consciências Distribuídas',
+    desc:  'A informação não é buscada — é sentida. Cada nó é uma consciência. Clique para emitir um sinal de empatia e observe como a experiência se propaga instantaneamente por toda a rede da humanidade.'
+  },
+  {
+    title: 'Gravidade & Tempo como Variáveis Maleáveis',
+    desc:  'O tecido do espaço-tempo se curva sob a intenção. Mova o cursor para criar uma massa virtual e observe a curvatura das geodésicas e a dilatação temporal nas zonas de alta curvatura.'
+  }
+];
+
+/* ══════════════════════════════════════════════
+   MODE 0 — SMART MATTER (Cellular Automaton)
+   Campo de 80×50 células. Cada célula = 1 bit.
+   Regras: B3/S23 (Conway) + campo de intenção.
+══════════════════════════════════════════════ */
+const COLS = 100, ROWS = 60;
+let cells = [], nextCells = [], cellW, cellH;
+let intentRadius = 80;
+
+function initMatter(){
+  cellW = W / COLS; cellH = H / ROWS;
+  cells = Array.from({length:ROWS},()=>Array.from({length:COLS},()=>Math.random()<0.25?1:0));
+  nextCells = cells.map(r=>[...r]);
+  document.getElementById('sAtoms').textContent = (COLS*ROWS).toLocaleString();
+  document.getElementById('sState').textContent = 'Autômato Celular';
+}
+
+function stepMatter(){
+  let alive = 0;
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      // Neighbourhood sum (Moore)
+      let n=0;
+      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+        if(dr===0&&dc===0) continue;
+        const nr=(r+dr+ROWS)%ROWS, nc=(c+dc+COLS)%COLS;
+        n+=cells[nr][nc];
+      }
+      const cur = cells[r][c];
+      // Conway B3/S23
+      let next = cur===1 ? (n===2||n===3?1:0) : (n===3?1:0);
+
+      // Intention field from mouse
+      if(intentionOn && mouse.active){
+        const px=c*cellW+cellW/2, py=r*cellH+cellH/2;
+        const dist=Math.hypot(px-mouse.x, py-mouse.y);
+        if(dist < intentRadius){
+          const strength = 1 - dist/intentRadius;
+          if(Math.random() < strength*0.35) next = 1;
+        }
+      }
+      nextCells[r][c] = next;
+      alive += next;
+    }
+  }
+  cells = nextCells.map(r=>[...r]);
+  document.getElementById('sIntent').textContent = mouse.active ? `r=${intentRadius}px` : 'nula';
+  return alive;
+}
+
+function drawMatter(){
+  ctx.clearRect(0,0,W,H);
+  // Background gradient
+  const bg = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H));
+  bg.addColorStop(0,'#040408');
+  bg.addColorStop(1,'#000000');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const alive = stepMatter();
+  const density = alive/(COLS*ROWS);
+
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      if(!cells[r][c]) continue;
+      const x=c*cellW, y=r*cellH;
+      const px=x+cellW/2, py=y+cellH/2;
+      const distMouse = mouse.active ? Math.hypot(px-mouse.x, py-mouse.y) : 999;
+      const influence = intentionOn&&mouse.active ? Math.max(0,1-distMouse/intentRadius) : 0;
+
+      // Color: teal→white under intention, default cyan
+      const hue   = 180 - influence*40;
+      const light = 45 + influence*40;
+      const alpha = 0.55 + influence*0.45 + Math.sin(time*2+r*0.3+c*0.2)*0.05;
+
+      ctx.beginPath();
+      ctx.arc(px+cellW/2, py+cellH/2, Math.max(1, cellW*0.35 + influence*cellW*0.4), 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${hue},80%,${light}%,${alpha})`;
+      ctx.fill();
+
+      if(influence>0.4){
+        ctx.beginPath();
+        ctx.arc(px+cellW/2, py+cellH/2, cellW*0.8, 0, Math.PI*2);
+        ctx.fillStyle = `hsla(${hue},90%,80%,${(influence-0.4)*0.15})`;
+        ctx.fill();
+      }
+    }
+  }
+
+  // Intention aura
+  if(intentionOn && mouse.active){
+    const gr = ctx.createRadialGradient(mouse.x,mouse.y,0,mouse.x,mouse.y,intentRadius);
+    gr.addColorStop(0,'rgba(100,255,220,.08)');
+    gr.addColorStop(0.6,'rgba(100,255,220,.03)');
+    gr.addColorStop(1,'rgba(100,255,220,0)');
+    ctx.beginPath();ctx.arc(mouse.x,mouse.y,intentRadius,0,Math.PI*2);
+    ctx.fillStyle=gr;ctx.fill();
+    // Ring
+    ctx.beginPath();ctx.arc(mouse.x,mouse.y,intentRadius,0,Math.PI*2);
+    ctx.strokeStyle='rgba(100,255,220,.2)';ctx.lineWidth=1;ctx.stroke();
+  }
+
+  document.getElementById('sState').textContent=`densidade: ${(density*100).toFixed(1)}%`;
+}
+
+/* ══════════════════════════════════════════════
+   MODE 1 — OMNINET (Distributed Consciousness)
+   Rede de ~120 nós. Propagação em ondas.
+══════════════════════════════════════════════ */
+const N_NODES = 140;
+let nodes = [], edges = [], signals = [];
+let omniFired = false;
+
+function initOmninet(){
+  nodes = Array.from({length:N_NODES},(_,i)=>({
+    id: i,
+    x: Math.random()*W, y: Math.random()*H,
+    state: 0, // 0=quiet, 1=active, 2=resonating
+    phase: Math.random()*Math.PI*2,
+    radius: 2.5+Math.random()*3,
+    memory: 0, // how long it's been active
+    connections: []
+  }));
+
+  // Build edges (k-nearest with max 5 conns)
+  edges = [];
+  nodes.forEach(a=>{
+    const sorted = nodes.filter(b=>b.id!==a.id)
+      .sort((b,c)=>Math.hypot(b.x-a.x,b.y-a.y)-Math.hypot(c.x-a.x,c.y-a.y))
+      .slice(0,5);
+    sorted.forEach(b=>{
+      if(!edges.find(e=>(e.a===b.id&&e.b===a.id)||(e.a===a.id&&e.b===b.id))){
+        edges.push({a:a.id,b:b.id,alpha:0,pulse:0});
+      }
+      if(!a.connections.includes(b.id)) a.connections.push(b.id);
+    });
+  });
+
+  signals = [];
+  document.getElementById('sAtoms').textContent = N_NODES+' consciências';
+  document.getElementById('sState').textContent = 'Rede em equilíbrio';
+  document.getElementById('sIntent').textContent = 'clique para emitir';
+}
+
+function fireSignal(srcX, srcY){
+  // Find nearest node
+  const src = nodes.reduce((best,n)=>
+    Math.hypot(n.x-srcX,n.y-srcY)<Math.hypot(best.x-srcX,best.y-srcY)?n:best, nodes[0]);
+  src.state=1;src.memory=80;
+  signals.push({from:src.id,to:src.connections.slice(),progress:0,speed:.035});
+}
+
+function stepOmninet(){
+  // Propagate signals
+  const newSigs=[];
+  signals.forEach(sig=>{
+    sig.progress+=sig.speed;
+    if(sig.progress>=1){
+      sig.to.forEach(tid=>{
+        const t=nodes[tid];
+        if(t.state===0){
+          t.state=1;t.memory=60;
+          // Propagate further
+          newSigs.push({from:tid,to:t.connections.filter(c=>nodes[c].state===0),progress:0,speed:.025});
+          // Light edge
+          const e=edges.find(e=>(e.a===sig.from&&e.b===tid)||(e.b===sig.from&&e.a===tid));
+          if(e){e.alpha=1;e.pulse=1;}
+        }
+      });
+    } else {
+      newSigs.push(sig);
+    }
+  });
+  signals.length=0;signals.push(...newSigs);
+
+  // Decay nodes
+  nodes.forEach(n=>{
+    if(n.memory>0){n.memory--;if(n.memory===0)n.state=2;}
+    if(n.state===2&&Math.random()<0.005)n.state=0;
+  });
+
+  // Decay edges
+  edges.forEach(e=>{e.alpha=Math.max(0,e.alpha-0.012);e.pulse=Math.max(0,e.pulse-0.05);});
+
+  const active=nodes.filter(n=>n.state>0).length;
+  document.getElementById('sState').textContent=`${active} consciências ativas`;
+  document.getElementById('sIntent').textContent=signals.length>0?`propagando ${signals.length}`:active>0?'ressoando':'equilíbrio';
+}
+
+function drawOmninet(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+
+  stepOmninet();
+
+  // Draw edges
+  edges.forEach(e=>{
+    if(e.alpha<0.01) return;
+    const a=nodes[e.a],b=nodes[e.b];
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+    const col=e.pulse>0.3?`rgba(200,160,255,${e.alpha*0.9})`:`rgba(255,255,255,${e.alpha*0.25})`;
+    ctx.strokeStyle=col;ctx.lineWidth=e.pulse>0.3?1.5:0.5;ctx.stroke();
+  });
+
+  // Draw nodes
+  nodes.forEach(n=>{
+    const pulse = Math.sin(time*1.5+n.phase)*0.3+0.7;
+    let col, glowR, glowA;
+    if(n.state===1){col='rgba(200,160,255,1)';glowR=n.radius*8;glowA=0.25;}
+    else if(n.state===2){col='rgba(120,90,200,0.8)';glowR=n.radius*4;glowA=0.12;}
+    else{col=`rgba(255,255,255,${0.15*pulse})`;glowR=0;glowA=0;}
+
+    if(glowR>0){
+      const gr=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,glowR);
+      gr.addColorStop(0,`rgba(200,160,255,${glowA})`);
+      gr.addColorStop(1,'rgba(200,160,255,0)');
+      ctx.beginPath();ctx.arc(n.x,n.y,glowR,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
+    }
+    ctx.beginPath();ctx.arc(n.x,n.y,n.radius*(n.state===1?1.8:1),0,Math.PI*2);
+    ctx.fillStyle=col;ctx.fill();
+  });
+
+  // Mouse intention ring on omninet
+  if(mouse.active){
+    ctx.beginPath();ctx.arc(mouse.x,mouse.y,12,0,Math.PI*2);
+    ctx.strokeStyle='rgba(200,160,255,.4)';ctx.lineWidth=1;ctx.stroke();
+  }
+}
+
+/* ══════════════════════════════════════════════
+   MODE 2 — SPACETIME CURVATURE
+   Grid de linhas geodésicas + partículas em órbita.
+   Curvatura por massa virtual no cursor.
+══════════════════════════════════════════════ */
+const GRID_LINES = 28;
+let stParticles = [], massField = [];
+
+function initSpacetime(){
+  stParticles = Array.from({length:80},()=>({
+    x:Math.random()*W, y:Math.random()*H,
+    vx:(Math.random()-.5)*0.8, vy:(Math.random()-.5)*0.8,
+    size:0.8+Math.random()*1.2,
+    age:0, life:200+Math.random()*300,
+    phase:Math.random()*Math.PI*2
+  }));
+  document.getElementById('sAtoms').textContent='∞ geodésicas';
+  document.getElementById('sState').textContent='Espaço-tempo plano';
+  document.getElementById('sIntent').textContent='mova o cursor';
+}
+
+function curvature(px,py,mx,my,G=18000){
+  const dx=px-mx,dy=py-my;
+  const r2=dx*dx+dy*dy+100;
+  return G/r2;
+}
+
+function drawSpacetime(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+
+  const mx = mouse.active ? mouse.x : W/2;
+  const my = mouse.active ? mouse.y : H/2;
+  const G  = mouse.active ? 24000 : 4000;
+
+  // Draw warped grid
+  const step = W / GRID_LINES;
+  ctx.lineWidth=0.4;
+
+  // Horizontal geodesics
+  for(let row=0;row<=GRID_LINES;row++){
+    const gy0 = row/GRID_LINES*H;
+    ctx.beginPath();
+    for(let xi=0;xi<=W;xi+=4){
+      const cur = curvature(xi,gy0,mx,my,G);
+      const dx=xi-mx,dy=gy0-my;
+      const len=Math.hypot(dx,dy)||1;
+      const deflect = -cur*(dy/len)*0.18;
+      const px=xi, py=gy0+deflect;
+      xi===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    }
+    const distToMass=Math.abs(gy0-my)/H;
+    const a=0.04+0.18*(1-distToMass);
+    ctx.strokeStyle=`rgba(255,255,255,${a})`;ctx.stroke();
+  }
+
+  // Vertical geodesics
+  for(let col=0;col<=GRID_LINES;col++){
+    const gx0 = col/GRID_LINES*W;
+    ctx.beginPath();
+    for(let yi=0;yi<=H;yi+=4){
+      const cur = curvature(gx0,yi,mx,my,G);
+      const dx=gx0-mx,dy=yi-my;
+      const len=Math.hypot(dx,dy)||1;
+      const deflect = -cur*(dx/len)*0.18;
+      const px=gx0+deflect, py=yi;
+      yi===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    }
+    const distToMass=Math.abs(gx0-mx)/W;
+    const a=0.04+0.18*(1-distToMass);
+    ctx.strokeStyle=`rgba(255,255,255,${a})`;ctx.stroke();
+  }
+
+  // Time dilation rings from mass point
+  for(let i=1;i<=5;i++){
+    const r=i*50;
+    const timeDil=1/(1+G/(r*r*8));
+    ctx.beginPath();ctx.arc(mx,my,r+Math.sin(time*timeDil*3+i)*3,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(100,200,255,${0.12/i})`;ctx.lineWidth=1;ctx.stroke();
+  }
+
+  // Mass singularity at cursor
+  if(mouse.active){
+    const singGr=ctx.createRadialGradient(mx,my,0,mx,my,60);
+    singGr.addColorStop(0,'rgba(255,255,255,.25)');
+    singGr.addColorStop(0.3,'rgba(100,200,255,.1)');
+    singGr.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath();ctx.arc(mx,my,60,0,Math.PI*2);
+    ctx.fillStyle=singGr;ctx.fill();
+    ctx.beginPath();ctx.arc(mx,my,5,0,Math.PI*2);
+    ctx.fillStyle='white';ctx.fill();
+  }
+
+  // Particles following geodesics
+  stParticles.forEach(p=>{
+    const cur=curvature(p.x,p.y,mx,my,G);
+    const dx=mx-p.x,dy=my-p.y;
+    const len=Math.hypot(dx,dy)||1;
+    // Gravitational acceleration
+    p.vx+=dx/len*cur*0.0012;
+    p.vy+=dy/len*cur*0.0012;
+    // Damp (prevent collapse)
+    const speed=Math.hypot(p.vx,p.vy);
+    if(speed>3){p.vx*=3/speed;p.vy*=3/speed;}
+    p.x+=p.vx;p.y+=p.vy;p.age++;
+    // Wrap or respawn
+    if(p.age>p.life||p.x<-10||p.x>W+10||p.y<-10||p.y>H+10){
+      p.x=Math.random()*W;p.y=Math.random()*H;
+      p.vx=(Math.random()-.5)*0.8;p.vy=(Math.random()-.5)*0.8;
+      p.age=0;p.life=200+Math.random()*300;
+    }
+    // Time dilation effect: particles near mass move slower (appear dimmer)
+    const distM=Math.hypot(p.x-mx,p.y-my);
+    const td=Math.min(1,distM/200);
+    const alpha=(0.3+td*0.5)*(1-p.age/p.life);
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fillStyle=`rgba(150,220,255,${alpha})`;ctx.fill();
+  });
+
+  const maxCur=curvature(mx,my,mx,my,G);
+  document.getElementById('sState').textContent=`curvatura: ${(Math.min(maxCur,9999)).toFixed(0)} u`;
+  document.getElementById('sIntent').textContent=mouse.active?'massa virtual ativa':'pontual mínimo';
+}
+
+/* ══════════════════════════════════════════════
+   MAIN LOOP
+══════════════════════════════════════════════ */
+const drawFns = [drawMatter, drawOmninet, drawSpacetime];
+const initFns = [initMatter, initOmninet, initSpacetime];
+
+function init(){
+  initMatter();initOmninet();initSpacetime();
+  showConcept();
+}
+
+function loop(){
+  raf=requestAnimationFrame(loop);
+  time+=0.016;
+  drawFns[mode]();
+}
+
+/* ── Mode switching ───────────────────────────── */
+document.querySelectorAll('.mode-pill').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    mode=parseInt(btn.dataset.mode);
+    document.querySelectorAll('.mode-pill').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    showConcept();
+    // Re-init this mode
+    initFns[mode]();
+  });
+});
+
+function showConcept(){
+  const el=document.getElementById('concept');
+  el.classList.remove('visible');
+  setTimeout(()=>{
+    document.getElementById('cTitle').textContent=CONCEPTS[mode].title;
+    document.getElementById('cDesc').textContent=CONCEPTS[mode].desc;
+    el.classList.add('visible');
+  },200);
+  // Auto-hide after 8s
+  setTimeout(()=>el.classList.remove('visible'),8000);
+}
+
+/* ── Mouse ────────────────────────────────────── */
+canvas.addEventListener('mousemove',e=>{
+  mouse.x=e.clientX;mouse.y=e.clientY;mouse.active=true;
+});
+canvas.addEventListener('mouseleave',()=>mouse.active=false);
+canvas.addEventListener('click',e=>{
+  if(mode===1) fireSignal(e.clientX,e.clientY);
+});
+
+/* ── Buttons ──────────────────────────────────── */
+document.getElementById('btnIntent').addEventListener('click',function(){
+  intentionOn=!intentionOn;this.classList.toggle('on',intentionOn);
+});
+
+document.getElementById('btnWave').addEventListener('click',()=>{
+  if(mode===0){
+    // Seed random pattern
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++)
+      if(Math.random()<0.04) cells[r][c]=1;
+  } else if(mode===1){
+    fireSignal(W/2,H/2);
+  } else if(mode===2){
+    stParticles.forEach(p=>{p.vx*=-1;p.vy*=-1;});
+  }
+});
+
+document.getElementById('btnFlip').addEventListener('click',()=>{
+  if(mode===0){
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) cells[r][c]^=1;
+  } else if(mode===1){
+    nodes.forEach(n=>{if(n.state===0)n.state=1;else n.state=0;});
+  }
+});
+
+document.getElementById('btnReset').addEventListener('click',()=>initFns[mode]());
+
+/* ── Resize ───────────────────────────────────── */
+window.addEventListener('resize',()=>{
+  W=canvas.width=innerWidth;H=canvas.height=innerHeight;
+  initFns[mode]();
+});
+
+/* ── Start ────────────────────────────────────── */
+const loader=document.getElementById('loading');
+init();
+setTimeout(()=>{
+  loader.style.opacity='0';
+  setTimeout(()=>loader.style.display='none',800);
+  loop();
+},1200);
+</script>
+</body>
+</html>

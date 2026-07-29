@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OMNIREALITY — Realidade Computável</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Inter',sans-serif;}
+
+/* ── Canvas ──────────────────────────────────── */
+#glCanvas{position:fixed;inset:0;width:100%;height:100%;display:block;}
+video,#cam2d{position:fixed;opacity:0;pointer-events:none;top:-9999px;}
+
+/* ── HUD ─────────────────────────────────────── */
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none;}
+
+.top-bar{
+  position:absolute;top:0;left:0;right:0;
+  padding:16px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,rgba(0,0,0,.9) 0%,transparent 100%);
+}
+
+.brand{font-family:'JetBrains Mono',monospace;font-size:.78rem;letter-spacing:.1em;color:rgba(255,255,255,.5);}
+.brand b{color:#4af0c8;}
+
+.chips{display:flex;gap:8px;}
+.chip{
+  padding:4px 12px;border-radius:99px;font-size:.63rem;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.3);background:rgba(0,0,0,.5);
+  transition:all .3s;
+}
+.chip.on{border-color:rgba(74,240,200,.5);color:#4af0c8;background:rgba(74,240,200,.06);}
+.chip.live{border-color:rgba(248,113,113,.5);color:#f87171;background:rgba(248,113,113,.06);}
+.chip.live::before{content:'● ';animation:bl .7s infinite;}
+@keyframes bl{50%{opacity:0}}
+
+/* ── Left Panel ──────────────────────────────── */
+.left-panel{
+  position:absolute;left:20px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:10px;width:190px;
+}
+.data-card{
+  background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:11px 14px;backdrop-filter:blur(12px);
+}
+.dc-label{font-size:.6rem;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;}
+.dc-val{font-family:'JetBrains Mono',monospace;font-size:.88rem;color:#fff;line-height:1;}
+.dc-bar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:8px;overflow:hidden;}
+.dc-fill{height:100%;border-radius:2px;transition:width .15s ease;}
+
+/* ── Bottom bar ──────────────────────────────── */
+.bot-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:18px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to top,rgba(0,0,0,.92) 0%,transparent 100%);
+  pointer-events:all;
+}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;}
+.hbtn{
+  padding:9px 18px;border-radius:8px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:.75rem;font-weight:500;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);
+  transition:all .18s;
+}
+.hbtn:hover{background:rgba(255,255,255,.12);color:#fff;transform:translateY(-1px);}
+.hbtn.on{background:rgba(74,240,200,.1);border-color:rgba(74,240,200,.35);color:#4af0c8;}
+
+/* ── Speech box ──────────────────────────────── */
+.speech-box{
+  position:absolute;bottom:90px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:10px 16px;
+  font-size:.76rem;color:rgba(255,255,255,.6);line-height:1.6;
+  max-width:400px;text-align:center;
+  backdrop-filter:blur(10px);
+  opacity:0;transition:opacity .5s;pointer-events:none;
+}
+.speech-box.show{opacity:1;}
+
+/* ── Permission overlay ───────────────────────── */
+#perm{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.97);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:40px;text-align:center;
+}
+.p-title{font-size:1.4rem;font-weight:600;color:#fff;letter-spacing:-.01em;}
+.p-sub{font-size:.82rem;color:rgba(255,255,255,.4);max-width:420px;line-height:1.8;}
+.p-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:360px;margin:6px 0;}
+.p-item{
+  display:flex;align-items:center;gap:13px;padding:11px 16px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;font-size:.79rem;color:rgba(255,255,255,.6);text-align:left;
+}
+.p-item .ico{font-size:1.2rem;}
+.p-item .ptxt{}
+.p-item .psub{font-size:.68rem;color:rgba(255,255,255,.3);margin-top:2px;}
+.grant-btn{
+  padding:13px 36px;border-radius:10px;border:none;cursor:pointer;
+  background:rgba(74,240,200,.12);border:1px solid rgba(74,240,200,.3);
+  color:#4af0c8;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;
+  transition:all .2s;letter-spacing:.02em;
+}
+.grant-btn:hover{background:rgba(74,240,200,.22);}
+.skip-btn{
+  font-size:.72rem;color:rgba(255,255,255,.25);cursor:pointer;
+  background:none;border:none;font-family:'Inter',sans-serif;
+  transition:color .2s;
+}
+.skip-btn:hover{color:rgba(255,255,255,.5);}
+  </style>
+</head>
+<body>
+
+<video id="vid" autoplay muted playsinline></video>
+<canvas id="cam2d"></canvas>
+<canvas id="glCanvas"></canvas>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="top-bar">
+    <div class="brand">OMNI<b>REALITY</b> — hardware vivo</div>
+    <div class="chips">
+      <div class="chip" id="cGpu">GPU WebGL2</div>
+      <div class="chip" id="cCam">Câmera</div>
+      <div class="chip" id="cMic">Microfone</div>
+      <div class="chip" id="cSpk">Narrador</div>
+    </div>
+  </div>
+
+  <div class="left-panel">
+    <div class="data-card">
+      <div class="dc-label">Entropia H(X)</div>
+      <div class="dc-val" id="dEnt">—</div>
+      <div class="dc-bar"><div class="dc-fill" id="dEntB" style="width:0%;background:#4af0c8"></div></div>
+    </div>
+    <div class="data-card">
+      <div class="dc-label">Amplitude (mic)</div>
+      <div class="dc-val" id="dMic">offline</div>
+      <div class="dc-bar"><div class="dc-fill" id="dMicB" style="width:0%;background:#f472b6"></div></div>
+    </div>
+    <div class="data-card">
+      <div class="dc-label">Câmera → Bits</div>
+      <div class="dc-val" id="dCam">sem sinal</div>
+      <div class="dc-bar"><div class="dc-fill" id="dCamB" style="width:0%;background:#60a5fa"></div></div>
+    </div>
+    <div class="data-card">
+      <div class="dc-label">Células vivas</div>
+      <div class="dc-val" id="dAlive">—</div>
+      <div class="dc-bar"><div class="dc-fill" id="dAliveB" style="width:0%;background:#facc15"></div></div>
+    </div>
+    <div class="data-card">
+      <div class="dc-label">FPS · GPU cycles</div>
+      <div class="dc-val" id="dFps">—</div>
+      <div class="dc-bar"><div class="dc-fill" id="dFpsB" style="width:0%;background:#a78bfa"></div></div>
+    </div>
+  </div>
+
+  <div class="speech-box" id="speechBox"></div>
+
+  <div class="bot-bar">
+    <div class="btn-row">
+      <button class="hbtn on"  id="bRun">⟳ Rodando</button>
+      <button class="hbtn"     id="bCam">📷 Câmera-Seed</button>
+      <button class="hbtn"     id="bSnd">🔊 Som</button>
+      <button class="hbtn"     id="bSpk">🗣 Narrar</button>
+      <button class="hbtn"     id="bInv">⚡ Inverter</button>
+      <button class="hbtn"     id="bSeed">🌱 Nova Semente</button>
+      <button class="hbtn"     id="bMode">🎨 Tema</button>
+      <a class="hbtn" href="cosmos.html" style="text-decoration:none">← Cosmos</a>
+    </div>
+  </div>
+</div>
+
+<!-- Permission -->
+<div id="perm">
+  <div class="p-title">⚡ OMNIREALITY ENGINE</div>
+  <div class="p-sub">Seu hardware físico torna-se parte do computador. Câmera e microfone alimentam diretamente shaders na GPU em tempo real.</div>
+  <div class="p-list">
+    <div class="p-item"><span class="ico">📷</span><div><div class="ptxt">Câmera → Pixels → Bits → GPU texture</div><div class="psub">Seus pixels viram semente do autômato celular</div></div></div>
+    <div class="p-item"><span class="ico">🎤</span><div><div class="ptxt">Microfone → Amplitude → Campo de Intenção</div><div class="psub">Sua voz altera a física do universo computacional</div></div></div>
+    <div class="p-item"><span class="ico">🔊</span><div><div class="ptxt">Estado → Síntese de Som (Web Audio)</div><div class="psub">A realidade gera som em tempo real</div></div></div>
+  </div>
+  <button class="grant-btn" id="bGrant">Conceder Acesso ao Hardware</button>
+  <button class="skip-btn"  id="bSkip">continuar sem câmera/microfone</button>
+</div>
+
+<script>
+'use strict';
+/* ═══════════════════════════════════════════════════════════
+   OMNIREALITY — WebGL2 + Camera + Mic + Audio Synthesis
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Helpers ──────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+/* ── WebGL2 ───────────────────────────────────────────────── */
+const glc = $('glCanvas');
+const gl  = glc.getContext('webgl2', {
+  antialias: false, alpha: false,
+  powerPreference: 'high-performance',
+  preserveDrawingBuffer: true   // needed for readPixels
+});
+
+if(!gl){ alert('WebGL2 não suportado neste navegador. Use Chrome 80+.'); }
+
+let W = glc.width  = innerWidth;
+let H = glc.height = innerHeight;
+
+/* ── Simulation size ──────────────────────────────────────── */
+const SW = 512, SH = 512;
+
+/* ── GLSL SHADERS ─────────────────────────────────────────── */
+const VERT = `#version 300 es
+in vec2 aPos;
+out vec2 vUV;
+void main(){
+  vUV = aPos*0.5+0.5;
+  gl_Position = vec4(aPos,0.0,1.0);
+}`;
+
+/* Compute: one step of the automaton on the GPU */
+const COMP_FRAG = `#version 300 es
+precision highp float;
+precision highp sampler2D;
+uniform sampler2D uState;
+uniform sampler2D uCam;
+uniform vec2      uInvRes;     // 1/SIM_SIZE
+uniform vec2      uMouse;      // normalized 0-1
+uniform float     uIntentR;    // intention radius (normalized)
+uniform float     uIntentStr;  // mic amplitude → strength
+uniform float     uCamW;       // camera weight
+uniform float     uTime;
+uniform int       uFlip;
+in  vec2 vUV;
+out vec4 oColor;
+
+float cell(vec2 off){
+  return texture(uState, fract(vUV + off*uInvRes)).r;
+}
+
+float hash(vec2 p){
+  return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453+uTime*0.01);
+}
+
+void main(){
+  // Moore neighbourhood
+  float n = cell(vec2(-1,-1)) + cell(vec2(0,-1)) + cell(vec2(1,-1))
+           + cell(vec2(-1, 0))                    + cell(vec2(1, 0))
+           + cell(vec2(-1, 1)) + cell(vec2(0, 1)) + cell(vec2(1, 1));
+
+  float cur  = texture(uState, vUV).r;
+  float camB = texture(uCam,   vUV).r;
+  float age  = texture(uState, vUV).a;
+
+  // Conway B3/S23
+  float next = (cur>0.5)
+    ? ((n>1.9 && n<3.1) ? 1.0 : 0.0)
+    : ((n>2.9 && n<3.1) ? 1.0 : 0.0);
+
+  // Mouse / touch intention field
+  float d = distance(vUV, uMouse);
+  if(d < uIntentR){
+    float str = (1.0 - d/uIntentR) * uIntentStr;
+    if(hash(vUV+vec2(13.7,0.0)) < str*0.55) next = 1.0;
+  }
+
+  // Camera injection
+  if(camB > 0.5 && hash(vUV+vec2(0.0,9.3)) < uCamW*0.4) next = 1.0;
+
+  // Flip
+  if(uFlip==1) next = 1.0 - next;
+
+  // Age accumulation
+  float newAge = next>0.5 ? min(age+0.025,1.0) : max(age-0.05,0.0);
+
+  oColor = vec4(next, camB, uIntentStr*(d<uIntentR?1.0:0.0), newAge);
+}`;
+
+/* Render: beautiful visualization */
+const REND_FRAG = `#version 300 es
+precision highp float;
+uniform sampler2D uState;
+uniform float     uTime;
+uniform float     uMicAmp;
+uniform int       uTheme;
+in  vec2 vUV;
+out vec4 oColor;
+
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d){
+  return a + b*cos(6.28318*(c*t+d));
+}
+
+void main(){
+  vec4 s   = texture(uState, vUV);
+  float alive  = s.r;
+  float camBit = s.g;
+  float intent = s.b;
+  float age    = s.a;
+
+  vec3 col = vec3(0.01, 0.01, 0.015);
+
+  if(alive > 0.5){
+    // Theme 0: teal/cyan (default)
+    // Theme 1: fire (orange/red)
+    // Theme 2: matrix (green)
+    vec3 c0,c1,c2;
+    if(uTheme==0){
+      c0 = vec3(0.9, 0.97, 1.0);
+      c1 = vec3(0.28,0.94,0.79);
+      c2 = vec3(0.05,0.3, 0.5);
+    } else if(uTheme==1){
+      c0 = vec3(1.0, 0.95, 0.6);
+      c1 = vec3(1.0, 0.4, 0.05);
+      c2 = vec3(0.4, 0.05,0.01);
+    } else {
+      c0 = vec3(0.7, 1.0, 0.7);
+      c1 = vec3(0.1, 0.9, 0.2);
+      c2 = vec3(0.01,0.25,0.03);
+    }
+    col = age < 0.3 ? mix(c0,c1,age/0.3)
+         : age < 0.8 ? mix(c1,c2,(age-0.3)/0.5)
+         : c2;
+  }
+
+  // Intention field glow
+  if(intent > 0.02){
+    vec3 ig = vec3(0.7+0.3*sin(uTime),0.15,0.9);
+    col = mix(col, ig, min(intent*0.6,0.5));
+  }
+
+  // Camera bits: blue tint
+  if(camBit > 0.5 && alive < 0.5){
+    col = mix(col, vec3(0.1,0.3,1.0), 0.15+sin(uTime*2.0)*0.05);
+  }
+
+  // Mic pulse
+  col += vec3(uMicAmp * 0.12);
+
+  // Subtle grid lines
+  vec2 g = fract(vUV * vec2(512.0));
+  float gl2 = max(step(0.97,g.x), step(0.97,g.y));
+  col *= 1.0 - gl2*0.35;
+
+  // Vignette
+  vec2 uv2 = vUV*2.0-1.0;
+  col *= 1.0 - dot(uv2,uv2)*0.38;
+
+  // Chromatic aberration near edges
+  float edgeDist = 1.0-min(min(vUV.x,1.0-vUV.x),min(vUV.y,1.0-vUV.y))*8.0;
+  col.r = mix(col.r, col.r*1.3, max(0.0,edgeDist)*0.2);
+  col.b = mix(col.b, col.b*1.3, max(0.0,edgeDist)*0.2);
+
+  oColor = vec4(clamp(col,0.0,1.0), 1.0);
+}`;
+
+/* ── Compile & link ───────────────────────────────────────── */
+function mkShader(type, src){
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+    console.error(gl.getShaderInfoLog(s));
+  return s;
+}
+function mkProg(vs, fs){
+  const p = gl.createProgram();
+  gl.attachShader(p, mkShader(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, mkShader(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p, gl.LINK_STATUS))
+    console.error(gl.getProgramInfoLog(p));
+  return p;
+}
+
+const compProg = mkProg(VERT, COMP_FRAG);
+const rendProg = mkProg(VERT, REND_FRAG);
+
+/* ── Quad VBO ─────────────────────────────────────────────── */
+const quadVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quadVBO);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+
+function useQuad(prog){
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadVBO);
+  const loc = gl.getAttribLocation(prog,'aPos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+}
+
+/* ── Textures & FBOs ──────────────────────────────────────── */
+function mkTex(w, h, data){
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,data||null);
+  return t;
+}
+function mkFBO(tex){
+  const f = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER,f);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  return f;
+}
+
+function mkSeed(){
+  const d = new Uint8Array(SW*SH*4);
+  for(let i=0;i<SW*SH;i++){
+    const v = Math.random()<0.28?255:0;
+    d[i*4]=v; d[i*4+1]=0; d[i*4+2]=0; d[i*4+3]=0;
+  }
+  return d;
+}
+
+// Ping-pong setup
+let texRead = mkTex(SW, SH, mkSeed());
+let texWrite = mkTex(SW, SH);
+let fboRead  = mkFBO(texRead);
+let fboWrite = mkFBO(texWrite);
+const camTex = mkTex(SW, SH);
+
+$('cGpu').classList.add('on');
+
+/* ── Uniforms helper ──────────────────────────────────────── */
+function uni(p, name){ return gl.getUniformLocation(p, name); }
+
+/* ── State ────────────────────────────────────────────────── */
+let running = true, flipOnce = false, theme = 0;
+let mouseX = 0.5, mouseY = 0.5, intentR = 0.12;
+let camActive = false, micAmplitude = 0;
+let synthing = false, narrating = false;
+let frameN = 0, lastT = performance.now(), fps = 0;
+
+/* ── Camera ───────────────────────────────────────────────── */
+const vid   = $('vid');
+const cam2d = $('cam2d');
+const camCtx = cam2d.getContext('2d', {willReadFrequently:true});
+cam2d.width = SW; cam2d.height = SH;
+
+async function startCamera(){
+  try{
+    const s = await navigator.mediaDevices.getUserMedia({video:{width:SW,height:SH},audio:false});
+    vid.srcObject = s; await vid.play();
+    camActive = true;
+    $('cCam').classList.add('live');
+    return true;
+  }catch(e){ return false; }
+}
+
+function pushCameraToGPU(){
+  if(!camActive || vid.readyState<2) return 0;
+  camCtx.save(); camCtx.scale(-1,1); camCtx.drawImage(vid,-SW,0,SW,SH); camCtx.restore();
+  const px = camCtx.getImageData(0,0,SW,SH).data;
+  const out = new Uint8Array(SW*SH*4);
+  let ones = 0;
+  for(let i=0;i<SW*SH;i++){
+    const lum = 0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2];
+    const b   = lum>120?255:0;
+    out[i*4]=b; ones+=(b?1:0);
+  }
+  gl.bindTexture(gl.TEXTURE_2D, camTex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,SW,SH,0,gl.RGBA,gl.UNSIGNED_BYTE,out);
+  return ones/(SW*SH);
+}
+
+/* ── Microphone ───────────────────────────────────────────── */
+let audioCtx=null, analyser=null, micBuf=null;
+let oscBank=[], masterGain=null;
+
+async function startMic(){
+  try{
+    const s = await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    audioCtx = new AudioContext();
+    const src = audioCtx.createMediaStreamSource(s);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize=256; analyser.smoothingTimeConstant=0.85;
+    src.connect(analyser);
+    micBuf = new Uint8Array(analyser.frequencyBinCount);
+    $('cMic').classList.add('live');
+
+    // Oscillator bank for synthesis
+    masterGain = audioCtx.createGain(); masterGain.gain.value=0;
+    masterGain.connect(audioCtx.destination);
+    for(let i=0;i<10;i++){
+      const osc=audioCtx.createOscillator();
+      const g=audioCtx.createGain(); g.gain.value=0;
+      osc.type=['sine','triangle','sine','triangle','sine'][i%5];
+      osc.frequency.value=55*Math.pow(2,i/6);
+      osc.connect(g); g.connect(masterGain); osc.start();
+      oscBank.push({osc,g});
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+function readMic(){
+  if(!analyser) return 0;
+  analyser.getByteTimeDomainData(micBuf);
+  let rms=0;
+  for(let i=0;i<micBuf.length;i++){ const v=(micBuf[i]-128)/128; rms+=v*v; }
+  return Math.sqrt(rms/micBuf.length);
+}
+
+function updateSynth(density){
+  if(!synthing || !masterGain) return;
+  const vol = density*0.25 + micAmplitude*0.3;
+  masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.08);
+  oscBank.forEach((o,i)=>{
+    o.g.gain.setTargetAtTime(density*0.08*(1+Math.sin(frameN*0.01+i)), audioCtx.currentTime, 0.1);
+    o.osc.frequency.setTargetAtTime(55*Math.pow(2,i/6)+micAmplitude*300, audioCtx.currentTime, 0.05);
+  });
+}
+
+/* ── Shannon Entropy (from GPU readback) ──────────────────── */
+// Small 64×64 readback texture+FBO for entropy sampling
+const rbTex = mkTex(64,64);
+const rbFBO = mkFBO(rbTex);
+const rbBuf = new Uint8Array(64*64*4);
+let   lastEntropy = 1, lastDensity = 0.3;
+
+function sampleEntropy(){
+  // Blit simulation state (64×64 region) into rbFBO
+  gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fboRead);
+  gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, rbFBO);
+  gl.blitFramebuffer(0,0,64,64, 0,0,64,64, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, rbFBO);
+  gl.readPixels(0,0,64,64,gl.RGBA,gl.UNSIGNED_BYTE,rbBuf);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+
+  let ones=0;
+  for(let i=0;i<64*64;i++) ones += rbBuf[i*4]>128?1:0;
+  const p1=ones/4096, p0=1-p1;
+  const H = -(p0>0?p0*Math.log2(p0):0)-(p1>0?p1*Math.log2(p1):0);
+  return {H:isNaN(H)?0:H, density:p1};
+}
+
+/* ── Speech ───────────────────────────────────────────────── */
+const SPEECH_PHRASES = d=>[
+  `Entropia: ${d.H.toFixed(3)} bits por símbolo.`,
+  `${Math.round(d.density*SW*SH).toLocaleString()} células vivas na GPU.`,
+  `Campo de intenção ${micAmplitude>0.04?'ativo pela sua voz':'em repouso'}.`,
+  camActive?`Câmera processando ${(d.camDensity*100).toFixed(0)}% de pixels iluminados.`:`Câmera offline. Autômato autônomo.`,
+  `Ciclos de GPU: ${Math.round(fps)} por segundo.`,
+  `Realidade binária: ${SW*SH/1000}k bits paralelos.`,
+];
+
+let lastSpoke=0;
+function narrate(d){
+  const phrases = SPEECH_PHRASES(d);
+  const text = phrases[Math.floor(Math.random()*phrases.length)];
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang='pt-BR'; utt.rate=0.88; utt.pitch=0.82; utt.volume=0.65;
+  speechSynthesis.cancel(); speechSynthesis.speak(utt);
+  $('cSpk').classList.add('on');
+  utt.onend=()=>$('cSpk').classList.remove('on');
+  const sb = $('speechBox');
+  sb.textContent=text; sb.classList.add('show');
+  clearTimeout(sb._t);
+  sb._t=setTimeout(()=>sb.classList.remove('show'),5000);
+}
+
+/* ── Mouse/touch intention ────────────────────────────────── */
+glc.addEventListener('mousemove',e=>{
+  mouseX=e.clientX/W; mouseY=1-(e.clientY/H);
+});
+glc.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  mouseX=e.touches[0].clientX/W;
+  mouseY=1-(e.touches[0].clientY/H);
+},{passive:false});
+
+/* ── Main render loop ─────────────────────────────────────── */
+let camDensity=0;
+
+function loop(){
+  requestAnimationFrame(loop);
+  frameN++;
+
+  // FPS
+  const now=performance.now();
+  fps=fps*0.9+(1000/(now-lastT))*0.1;
+  lastT=now;
+
+  // Mic amplitude
+  micAmplitude=readMic();
+
+  // Camera → GPU (every 3 frames)
+  if(frameN%3===0) camDensity=pushCameraToGPU();
+
+  if(running){
+    /* ── Compute step ── */
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fboWrite);
+    gl.viewport(0,0,SW,SH);
+    gl.useProgram(compProg);
+    useQuad(compProg);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texRead);
+    gl.uniform1i(uni(compProg,'uState'),0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, camTex);
+    gl.uniform1i(uni(compProg,'uCam'),1);
+
+    gl.uniform2f(uni(compProg,'uInvRes'),1/SW,1/SH);
+    gl.uniform2f(uni(compProg,'uMouse'),mouseX,mouseY);
+    gl.uniform1f(uni(compProg,'uIntentR'),intentR);
+    gl.uniform1f(uni(compProg,'uIntentStr'),0.3+micAmplitude*4);
+    gl.uniform1f(uni(compProg,'uCamW'),camActive?0.35:0);
+    gl.uniform1f(uni(compProg,'uTime'),frameN*0.016);
+    gl.uniform1i(uni(compProg,'uFlip'),flipOnce?1:0);
+    flipOnce=false;
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+
+    // Swap ping-pong
+    [texRead,texWrite]=[texWrite,texRead];
+    [fboRead,fboWrite]=[fboWrite,fboRead];
+  }
+
+  /* ── Render to screen ── */
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,W,H);
+  gl.useProgram(rendProg);
+  useQuad(rendProg);
+
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texRead);
+  gl.uniform1i(uni(rendProg,'uState'),0);
+  gl.uniform1f(uni(rendProg,'uTime'),frameN*0.016);
+  gl.uniform1f(uni(rendProg,'uMicAmp'),micAmplitude);
+  gl.uniform1i(uni(rendProg,'uTheme'),theme);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+
+  /* ── HUD update (every 20 frames) ── */
+  if(frameN%20===0){
+    try{
+      const {H,density}=sampleEntropy();
+      lastEntropy=H; lastDensity=density;
+      $('dEnt').textContent=H.toFixed(4)+' bits';
+      $('dEntB').style.width=(H*100)+'%';
+      $('dAlive').textContent=Math.round(density*SW*SH).toLocaleString();
+      $('dAliveB').style.width=(density*100)+'%';
+    }catch(e){}
+
+    $('dMic').textContent=micAmplitude>0?(micAmplitude*100).toFixed(1)+' u':'offline';
+    $('dMicB').style.width=Math.min(micAmplitude*500,100)+'%';
+
+    $('dCam').textContent=camActive?(camDensity*100).toFixed(1)+'% lit':'sem sinal';
+    $('dCamB').style.width=(camDensity*100)+'%';
+
+    $('dFps').textContent=fps.toFixed(0)+' fps';
+    $('dFpsB').style.width=Math.min(fps/120*100,100)+'%';
+
+    updateSynth(lastDensity);
+
+    if(narrating && (now-lastSpoke>7000)){
+      narrate({H:lastEntropy,density:lastDensity,camDensity});
+      lastSpoke=now;
+    }
+  }
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+$('bRun').addEventListener('click',function(){
+  running=!running;
+  this.classList.toggle('on',running);
+  this.textContent=running?'⟳ Rodando':'⏸ Pausado';
+});
+
+$('bCam').addEventListener('click',function(){
+  if(!camActive){ alert('Câmera não iniciada. Recarregue e conceda permissão.'); return; }
+  // Inject camera as seed
+  pushCameraToGPU();
+  const seed = new Uint8Array(SW*SH*4);
+  camCtx.drawImage(vid,0,0,SW,SH);
+  const px=camCtx.getImageData(0,0,SW,SH).data;
+  for(let i=0;i<SW*SH;i++){
+    const lum=0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2];
+    seed[i*4]=lum>120?255:0;
+  }
+  gl.bindTexture(gl.TEXTURE_2D,texRead);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,SW,SH,0,gl.RGBA,gl.UNSIGNED_BYTE,seed);
+  this.classList.add('on'); setTimeout(()=>this.classList.remove('on'),600);
+});
+
+$('bSnd').addEventListener('click',function(){
+  if(!audioCtx){ alert('Microfone não iniciado.'); return; }
+  synthing=!synthing;
+  this.classList.toggle('on',synthing);
+  if(!synthing && masterGain) masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,0.3);
+});
+
+$('bSpk').addEventListener('click',function(){
+  narrating=!narrating;
+  this.classList.toggle('on',narrating);
+  if(narrating) narrate({H:lastEntropy,density:lastDensity,camDensity});
+});
+
+$('bInv').addEventListener('click',()=>{ flipOnce=true; });
+
+$('bSeed').addEventListener('click',()=>{
+  const d=mkSeed();
+  gl.bindTexture(gl.TEXTURE_2D,texRead);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,SW,SH,0,gl.RGBA,gl.UNSIGNED_BYTE,d);
+});
+
+$('bMode').addEventListener('click',function(){
+  theme=(theme+1)%3;
+  const names=['Teal','Fogo','Matrix'];
+  this.textContent='🎨 '+names[theme];
+});
+
+/* ── Permission screen ────────────────────────────────────── */
+async function startHardware(){
+  await startCamera();
+  await startMic();
+  const msg = camActive&&micAmplitude>=0
+    ? 'Sistema iniciado com câmera e microfone.'
+    : 'Sistema iniciado em modo autônomo.';
+  setTimeout(()=>{ if(narrating)narrate({H:1,density:0.3,camDensity:0}); },1500);
+}
+
+$('bGrant').addEventListener('click',async()=>{
+  $('perm').style.opacity='0';
+  $('perm').style.transition='opacity .5s';
+  setTimeout(()=>$('perm').style.display='none',500);
+  await startHardware();
+  loop();
+});
+
+$('bSkip').addEventListener('click',()=>{
+  $('perm').style.opacity='0';
+  $('perm').style.transition='opacity .5s';
+  setTimeout(()=>$('perm').style.display='none',500);
+  loop();
+});
+
+/* ── Resize ───────────────────────────────────────────────── */
+window.addEventListener('resize',()=>{
+  W=glc.width=innerWidth;
+  H=glc.height=innerHeight;
+});
+
+// mkSeed already defined above as a function expression → hoist fix
+function mkSeed(){
+  const d=new Uint8Array(SW*SH*4);
+  for(let i=0;i<SW*SH;i++){
+    const v=Math.random()<0.28?255:0;
+    d[i*4]=v; d[i*4+1]=0; d[i*4+2]=0; d[i*4+3]=0;
+  }
+  return d;
+}
+</script>
+</body>
+</html>

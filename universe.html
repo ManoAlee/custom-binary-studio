@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Binary Universe 2.0 — Grafismo Puro em Binário</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#010204;--text:rgba(255,255,255,.9);--muted:rgba(255,255,255,.4);
+      --c0:#0ea5e9;--c1:#4af0c8;--cdna:#f472b6;--cnet:#a78bfa;--cq:#facc15;
+      --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+    }
+    html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);}
+    canvas#c{display:block;position:fixed;inset:0;z-index:0;}
+
+    /* HUD */
+    #hud{position:fixed;inset:0;z-index:10;pointer-events:none;font-family:var(--font);}
+
+    /* Top */
+    .top{
+      position:absolute;top:0;left:0;right:0;
+      padding:18px 28px;
+      display:flex;align-items:center;justify-content:space-between;
+      background:linear-gradient(to bottom,rgba(1,2,4,.95),transparent);
+    }
+    .logo{display:flex;align-items:center;gap:12px}
+    .logo-glyph{
+      width:36px;height:36px;border-radius:8px;
+      background:linear-gradient(135deg,var(--c0),var(--c1));
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--mono);font-size:11px;font-weight:700;color:#000;
+      animation:glitch 4s infinite;
+    }
+    @keyframes glitch{
+      0%,95%,100%{transform:none;filter:none}
+      96%{transform:translateX(-2px);filter:hue-rotate(90deg)}
+      97%{transform:translateX(3px);filter:hue-rotate(-30deg)}
+      98%{transform:none}
+    }
+    .logo-text h1{font-size:.9rem;font-weight:600;color:var(--text);}
+    .logo-text p{font-size:.68rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+    .counter-strip{
+      font-family:var(--mono);font-size:.82rem;color:var(--c1);
+      display:flex;gap:20px;
+    }
+    .counter-item{display:flex;flex-direction:column;align-items:flex-end;}
+    .counter-item .k{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+    .counter-item .v{font-size:.9rem;color:var(--c1);}
+
+    /* Left nav */
+    .left-nav{
+      position:absolute;left:22px;top:50%;transform:translateY(-50%);
+      display:flex;flex-direction:column;gap:8px;
+      pointer-events:all;
+    }
+    .mode-btn{
+      display:flex;align-items:center;gap:10px;
+      padding:9px 14px;
+      background:rgba(1,2,4,.75);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:10px;
+      cursor:pointer;font-family:var(--font);font-size:.76rem;
+      color:var(--muted);
+      transition:all .2s;
+      backdrop-filter:blur(12px);
+      pointer-events:all;
+    }
+    .mode-btn:hover{border-color:rgba(255,255,255,.2);color:var(--text);}
+    .mode-btn.active{color:var(--text);}
+    .mode-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+    /* Bottom */
+    .bottom{
+      position:absolute;bottom:0;left:0;right:0;
+      padding:20px 28px;
+      display:flex;align-items:flex-end;justify-content:space-between;
+      background:linear-gradient(to top,rgba(1,2,4,.95),transparent);
+      pointer-events:all;
+    }
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+    .hbtn{
+      padding:9px 16px;border-radius:8px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.1);
+      color:var(--text);font-family:var(--font);
+      font-size:.78rem;font-weight:500;cursor:pointer;
+      transition:all .18s;backdrop-filter:blur(8px);
+    }
+    .hbtn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);transform:translateY(-1px);}
+    .hbtn.on{background:rgba(74,240,200,.1);border-color:rgba(74,240,200,.35);color:var(--c1);}
+
+    .desc-box{text-align:right;max-width:360px;}
+    .desc-box h3{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:3px;}
+    .desc-box p{font-size:.72rem;color:var(--muted);line-height:1.55;}
+
+    /* Binary clock */
+    .bin-clock{
+      position:absolute;right:26px;top:86px;
+      font-family:var(--mono);font-size:.7rem;
+      color:rgba(74,240,200,.6);
+      line-height:1.7;text-align:right;
+      pointer-events:none;
+    }
+
+    /* Edge info */
+    .edge-bits{
+      position:absolute;left:0;top:50%;transform:translateY(-50%);
+      writing-mode:vertical-rl;
+      font-family:var(--mono);font-size:.58rem;
+      color:rgba(74,240,200,.18);
+      padding:0 4px;
+      letter-spacing:.2em;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* Loading */
+    #loading{
+      position:fixed;inset:0;z-index:100;
+      background:var(--bg);
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:16px;
+      transition:opacity .5s;
+    }
+    .load-ring{
+      width:44px;height:44px;border-radius:50%;
+      border:2px solid rgba(74,240,200,.15);
+      border-top-color:var(--c1);
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #loading p{font-size:.8rem;color:var(--muted);}
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="load-ring"></div>
+  <p>Compilando o Universo em Binário…</p>
+</div>
+
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <!-- Top -->
+  <div class="top">
+    <div class="logo">
+      <div class="logo-glyph">01</div>
+      <div class="logo-text">
+        <h1>Binary Universe 2.0</h1>
+        <p>Grafismo puro em binário</p>
+      </div>
+    </div>
+    <div class="counter-strip">
+      <div class="counter-item"><span class="k">Bits</span><span class="v" id="statBits">—</span></div>
+      <div class="counter-item"><span class="k">Contagem</span><span class="v" id="statCount">—</span></div>
+      <div class="counter-item"><span class="k">Camada</span><span class="v" id="statMode">—</span></div>
+    </div>
+  </div>
+
+  <!-- Binary clock -->
+  <div class="bin-clock" id="binClock"></div>
+
+  <!-- Edge label -->
+  <div class="edge-bits" id="edgeBits">01001001010001000010101010101</div>
+
+  <!-- Left nav -->
+  <div class="left-nav">
+    <button class="mode-btn active" id="m0">
+      <div class="mode-dot" style="background:var(--c1);box-shadow:0 0 8px var(--c1)"></div>
+      Cosmos de Bits
+    </button>
+    <button class="mode-btn" id="m1">
+      <div class="mode-dot" style="background:var(--cdna);box-shadow:0 0 8px var(--cdna)"></div>
+      Árvore Binária 3D
+    </button>
+    <button class="mode-btn" id="m2">
+      <div class="mode-dot" style="background:var(--cnet);box-shadow:0 0 8px var(--cnet)"></div>
+      Chuva de Bits (3D)
+    </button>
+    <button class="mode-btn" id="m3">
+      <div class="mode-dot" style="background:var(--cq);box-shadow:0 0 8px var(--cq)"></div>
+      Fractal Sierpinski
+    </button>
+    <button class="mode-btn" id="m4">
+      <div class="mode-dot" style="background:var(--c0);box-shadow:0 0 8px var(--c0)"></div>
+      Formação de Número
+    </button>
+  </div>
+
+  <!-- Bottom -->
+  <div class="bottom">
+    <div class="btn-row">
+      <button class="hbtn on" id="btnRot">⟳ Auto-Orbitar</button>
+      <button class="hbtn" id="btnPulse">◉ Pulsar</button>
+      <button class="hbtn" id="btnExplode">⚡ Explosão</button>
+      <button class="hbtn" id="btnWire">⬡ Wireframe</button>
+      <a class="hbtn" href="index.html" style="text-decoration:none">← Studio</a>
+    </div>
+    <div class="desc-box" id="descBox">
+      <h3>Cosmos de Bits</h3>
+      <p>8.192 bits em órbita galáctica. Cada ponto é 0 (azul) ou 1 (ciano). A rotação diferencial simula a velocidade tangencial de uma galáxia espiral — assim como os dados em memória RAM.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+(()=>{
+
+/* ── Renderer ──────────────────────────────────── */
+const canvas = document.getElementById('c');
+const R = new THREE.WebGLRenderer({canvas, antialias:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));
+R.setSize(innerWidth, innerHeight);
+R.setClearColor(0x010204,1);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x010204, 0.009);
+
+const cam = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 1200);
+cam.position.set(0, 0, 80);
+
+/* ── State ─────────────────────────────────────── */
+let t=0, mode=0, autoRot=true, pulsing=false, wire=false;
+let theta=0, phi=Math.PI/2, radius=80;
+let dragging=false, lx=0, ly=0;
+
+/* ── Groups ────────────────────────────────────── */
+const G = [0,1,2,3,4].map(()=>{ const g=new THREE.Group(); scene.add(g); return g; });
+
+/* ══ MODE 0: COSMOS DE BITS (galaxy) ═══════════ */
+const N0=8192;
+const pos0=new Float32Array(N0*3), col0=new Float32Array(N0*3);
+const bit0=new Uint8Array(N0), ang0=new Float32Array(N0), rad0=new Float32Array(N0);
+
+for(let i=0;i<N0;i++){
+  const r   = 4 + Math.pow(Math.random(),0.5)*110;
+  const arm = Math.floor(Math.random()*4);
+  const baseAngle = (arm/4)*Math.PI*2 + (r/110)*Math.PI*3;
+  const spread = (Math.random()-0.5)*0.5;
+  const a = baseAngle + spread;
+  const y_spread = (Math.random()-0.5)*r*0.15;
+
+  pos0[i*3]   = Math.cos(a)*r;
+  pos0[i*3+1] = y_spread;
+  pos0[i*3+2] = Math.sin(a)*r;
+
+  ang0[i]=a; rad0[i]=r;
+  bit0[i]= Math.random()<0.5?0:1;
+
+  if(bit0[i]===1){ col0[i*3]=0.29;col0[i*3+1]=0.94;col0[i*3+2]=0.79; }
+  else           { col0[i*3]=0.06;col0[i*3+1]=0.64;col0[i*3+2]=0.91; }
+}
+
+const geo0=new THREE.BufferGeometry();
+geo0.setAttribute('position',new THREE.BufferAttribute(pos0,3));
+geo0.setAttribute('color',new THREE.BufferAttribute(col0,3));
+const mat0=new THREE.PointsMaterial({size:0.45,vertexColors:true,transparent:true,opacity:0.92,
+  blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
+G[0].add(new THREE.Points(geo0,mat0));
+
+/* ══ MODE 1: ÁRVORE BINÁRIA 3D ════════════════ */
+function addBranch(depth, pos, dir, up, G1, level=0){
+  if(depth<=0) return;
+  const len = 14 * Math.pow(0.65,level);
+  const end = pos.clone().addScaledVector(dir, len);
+
+  const pts=[pos.clone(),end.clone()];
+  const gLine=new THREE.BufferGeometry().setFromPoints(pts);
+  const hue = level/8;
+  const c = new THREE.Color().setHSL(0.75+hue*0.2,0.8,0.55+level*0.03);
+  const mLine=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:Math.max(0.12,0.9-level*0.1)});
+  G1.add(new THREE.Line(gLine,mLine));
+
+  if(level<2){
+    const sg=new THREE.SphereGeometry(len*0.06,6,6);
+    const sm=new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.7});
+    const ms=new THREE.Mesh(sg,sm); ms.position.copy(end);
+    G1.add(ms);
+  }
+
+  const right = new THREE.Vector3().crossVectors(dir,up).normalize();
+  const rot1 = 0.55 + Math.random()*0.15;
+  const rot2 = 0.55 + Math.random()*0.15;
+
+  const d1 = dir.clone().applyAxisAngle(right,  rot1).applyAxisAngle(dir, Math.random()*0.8).normalize();
+  const d2 = dir.clone().applyAxisAngle(right, -rot2).applyAxisAngle(dir, Math.random()*0.8).normalize();
+
+  addBranch(depth-1, end, d1, up, G1, level+1);
+  addBranch(depth-1, end, d2, up, G1, level+1);
+}
+
+addBranch(9, new THREE.Vector3(0,-40,0), new THREE.Vector3(0,1,0), new THREE.Vector3(1,0,0), G[1]);
+G[1].visible=false;
+
+/* ══ MODE 2: CHUVA DE BITS 3D ════════════════ */
+const N2=3500;
+const pos2=new Float32Array(N2*3), col2=new Float32Array(N2*3), vel2=new Float32Array(N2);
+const bitChar2=[];
+
+for(let i=0;i<N2;i++){
+  pos2[i*3]   = (Math.random()-0.5)*160;
+  pos2[i*3+1] = (Math.random()-0.5)*120;
+  pos2[i*3+2] = (Math.random()-0.5)*160;
+
+  vel2[i] = 0.04+Math.random()*0.12;
+  bitChar2.push(Math.random()<0.5?0:1);
+
+  const brightness=0.4+Math.random()*0.6;
+  col2[i*3]=0;col2[i*3+1]=brightness*0.9;col2[i*3+2]=brightness*0.4;
+}
+
+const geo2=new THREE.BufferGeometry();
+geo2.setAttribute('position',new THREE.BufferAttribute(pos2,3));
+geo2.setAttribute('color',new THREE.BufferAttribute(col2,3));
+const mat2=new THREE.PointsMaterial({size:0.7,vertexColors:true,transparent:true,opacity:0.9,
+  blending:THREE.AdditiveBlending,depthWrite:false});
+G[2].add(new THREE.Points(geo2,mat2));
+G[2].visible=false;
+
+/* Trails */
+const trailMat=new THREE.LineBasicMaterial({color:0x00ff66,transparent:true,opacity:.04,
+  blending:THREE.AdditiveBlending});
+for(let i=0;i<200;i++){
+  const x=(Math.random()-0.5)*160;
+  const z=(Math.random()-0.5)*160;
+  const len=5+Math.random()*25;
+  const startY=(Math.random()-0.5)*120;
+  const tPts=[new THREE.Vector3(x,startY,z),new THREE.Vector3(x,startY-len,z)];
+  G[2].add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(tPts),trailMat));
+}
+
+/* ══ MODE 3: FRACTAL SIERPINSKI ══════════════ */
+function sierpinski3D(a,b,c,d,depth,G3){
+  if(depth===0){
+    const pts=[a.clone(),b.clone(),c.clone(),a.clone(),d.clone(),b.clone(),d.clone(),c.clone()];
+    const g=new THREE.BufferGeometry().setFromPoints(pts);
+    const col=new THREE.Color().setHSL(depth*0.1,0.9,0.6);
+    G3.add(new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.6,
+      blending:THREE.AdditiveBlending})));
+    return;
+  }
+  const ab=new THREE.Vector3().addVectors(a,b).multiplyScalar(0.5);
+  const ac=new THREE.Vector3().addVectors(a,c).multiplyScalar(0.5);
+  const ad=new THREE.Vector3().addVectors(a,d).multiplyScalar(0.5);
+  const bc=new THREE.Vector3().addVectors(b,c).multiplyScalar(0.5);
+  const bd=new THREE.Vector3().addVectors(b,d).multiplyScalar(0.5);
+  const cd=new THREE.Vector3().addVectors(c,d).multiplyScalar(0.5);
+  sierpinski3D(a,ab,ac,ad,depth-1,G3);
+  sierpinski3D(ab,b,bc,bd,depth-1,G3);
+  sierpinski3D(ac,bc,c,cd,depth-1,G3);
+  sierpinski3D(ad,bd,cd,d,depth-1,G3);
+}
+
+const S=36;
+sierpinski3D(
+  new THREE.Vector3(0,S,0),
+  new THREE.Vector3(-S,-S*.6,S*.6),
+  new THREE.Vector3(S,-S*.6,S*.6),
+  new THREE.Vector3(0,-S*.6,-S*1.1),
+  5, G[3]
+);
+G[3].visible=false;
+
+/* ══ MODE 4: FORMAÇÃO DE NÚMERO ══════════════ */
+function buildNumber(num, G4){
+  G4.clear();
+  const binStr = num.toString(2).padStart(16,'0');
+  const gridW=8, gridH=2;
+  const spacing=5;
+
+  binStr.split('').forEach((bit,idx)=>{
+    const col = parseInt(idx/8);
+    const row = idx%8;
+    const x=(col - gridW/2+0.5)*spacing;
+    const y=(0.5-row/8*2)*spacing*4;
+
+    const c = bit==='1'?0x4af0c8:0x0e527a;
+    const sg=new THREE.SphereGeometry(bit==='1'?0.9:0.35,10,10);
+    const sm=new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:bit==='1'?.9:.35,
+      wireframe:wire});
+    const ms=new THREE.Mesh(sg,sm);
+    ms.position.set(x,y,0);
+    G4.add(ms);
+
+    if(bit==='1'){
+      const glight=new THREE.SphereGeometry(1.8,8,8);
+      const mlight=new THREE.MeshBasicMaterial({color:0x4af0c8,transparent:true,opacity:.05,wireframe:true});
+      const ml=new THREE.Mesh(glight,mlight);
+      ml.position.copy(ms.position);
+      G4.add(ml);
+    }
+  });
+}
+
+let targetNum=65; // 'A'
+buildNumber(targetNum, G[4]);
+G[4].visible=false;
+
+/* ── Modes config ─────────────────────────────── */
+const modes=[
+  { id:0, name:'Cosmos de Bits',
+    desc:'8.192 bits em órbita galáctica diferencial. Cada ponto é 0 (azul) ou 1 (ciano). As 4 espirais seguem a lei de velocidade tangencial de uma galáxia real.' },
+  { id:1, name:'Árvore Binária 3D',
+    desc:'Divisão recursiva em potências de 2: 2¹→2²→2³→...→2⁹. Em 9 níveis de profundidade a árvore produz 512 galhos — exatamente 9 bits de endereçamento.' },
+  { id:2, name:'Chuva de Bits 3D',
+    desc:'Cada coluna de chuva representa uma stream de dados caindo pela memória RAM. 0s e 1s caem com velocidades diferentes, como bytes de prioridades distintas.' },
+  { id:3, name:'Fractal Sierpinski',
+    desc:'O triângulo de Sierpinski é intrinsecamente binário: só aparecem os triângulos que correspondem ao coeficiente binomial C(n,k) onde n AND k = k (lógica binária AND).' },
+  { id:4, name:'Formação de Número',
+    desc:`Número atual: ${targetNum} = ${targetNum.toString(2).padStart(8,'0')} em binário. Os bits grandes são 1s, os pequenos são 0s. A representação física do dado.` },
+];
+
+function setMode(i){
+  G.forEach((g,k)=>g.visible=(k===i));
+  mode=i;
+  modes.forEach((_,k)=>{
+    document.getElementById('m'+k).classList.toggle('active',k===i);
+  });
+  document.getElementById('statMode').textContent=modes[i].name;
+  document.getElementById('descBox').innerHTML=
+    `<h3>${modes[i].name}</h3><p>${modes[i].desc}</p>`;
+}
+
+[0,1,2,3,4].forEach(i=>{
+  document.getElementById('m'+i).addEventListener('click',()=>setMode(i));
+});
+setMode(0);
+document.getElementById('statBits').textContent=N0.toLocaleString();
+
+/* ── Binary clock ─────────────────────────────── */
+function updateClock(){
+  const now=new Date();
+  const h=now.getHours().toString(2).padStart(5,'0');
+  const m=now.getMinutes().toString(2).padStart(6,'0');
+  const s=now.getSeconds().toString(2).padStart(6,'0');
+  document.getElementById('binClock').innerHTML=
+    `<span style="color:var(--c1)">${h}</span> Horas<br>`+
+    `<span style="color:var(--cdna)">${m}</span> Minutos<br>`+
+    `<span style="color:var(--cq)">${s}</span> Segundos`;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+/* ── Buttons ──────────────────────────────────── */
+document.getElementById('btnRot').addEventListener('click',function(){
+  autoRot=!autoRot; this.classList.toggle('on',autoRot);
+});
+document.getElementById('btnPulse').addEventListener('click',function(){
+  pulsing=!pulsing; this.classList.toggle('on',pulsing);
+});
+document.getElementById('btnExplode').addEventListener('click',()=>{
+  const p=geo0.attributes.position.array;
+  for(let i=0;i<N0;i++){
+    const len=Math.sqrt(p[i*3]**2+p[i*3+1]**2+p[i*3+2]**2);
+    p[i*3]  +=p[i*3]  /len*(Math.random()*8);
+    p[i*3+1]+=p[i*3+1]/len*(Math.random()*8);
+    p[i*3+2]+=p[i*3+2]/len*(Math.random()*8);
+  }
+  geo0.attributes.position.needsUpdate=true;
+});
+document.getElementById('btnWire').addEventListener('click',function(){
+  wire=!wire; this.classList.toggle('on',wire);
+  buildNumber(targetNum,G[4]);
+});
+
+/* ── Number counter ───────────────────────────── */
+let numCount=0;
+setInterval(()=>{
+  if(mode!==4) return;
+  numCount=(numCount+1)%256;
+  targetNum=numCount;
+  buildNumber(targetNum,G[4]);
+  document.getElementById('statCount').textContent=
+    numCount+' = '+numCount.toString(2).padStart(8,'0');
+  modes[4].desc=`Número atual: ${numCount} = ${numCount.toString(2).padStart(8,'0')} em binário. Os bits grandes são 1s, os pequenos são 0s.`;
+  document.getElementById('descBox').innerHTML=
+    `<h3>${modes[4].name}</h3><p>${modes[4].desc}</p>`;
+},400);
+
+/* ── Edge bit stream ──────────────────────────── */
+setInterval(()=>{
+  const eb=document.getElementById('edgeBits');
+  eb.textContent=Array.from({length:36},()=>Math.random()<0.5?'0':'1').join('');
+},200);
+
+/* ── Camera drag ──────────────────────────────── */
+canvas.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;});
+addEventListener('mouseup',()=>dragging=false);
+addEventListener('mousemove',e=>{
+  if(!dragging) return;
+  theta-=(e.clientX-lx)*0.004;
+  phi=Math.max(.15,Math.min(Math.PI-.15,phi-(e.clientY-ly)*0.004));
+  lx=e.clientX;ly=e.clientY;
+});
+canvas.addEventListener('wheel',e=>{
+  radius=Math.max(8,Math.min(250,radius+e.deltaY*.08));
+});
+canvas.addEventListener('touchstart',e=>{lx=e.touches[0].clientX;ly=e.touches[0].clientY;});
+canvas.addEventListener('touchmove',e=>{
+  theta-=(e.touches[0].clientX-lx)*0.005;
+  phi=Math.max(.15,Math.min(Math.PI-.15,phi-(e.touches[0].clientY-ly)*0.005));
+  lx=e.touches[0].clientX;ly=e.touches[0].clientY;
+});
+
+addEventListener('resize',()=>{
+  cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();
+  R.setSize(innerWidth,innerHeight);
+});
+
+/* ── Animate ──────────────────────────────────── */
+function animate(){
+  requestAnimationFrame(animate);
+  t+=0.007;
+
+  if(autoRot) theta+=0.003;
+
+  cam.position.x=radius*Math.sin(phi)*Math.cos(theta);
+  cam.position.y=radius*Math.cos(phi);
+  cam.position.z=radius*Math.sin(phi)*Math.sin(theta);
+  cam.lookAt(0,0,0);
+
+  /* MODE 0: galaxy differential rotation */
+  if(mode===0){
+    const p=geo0.attributes.position.array;
+    const c=geo0.attributes.color.array;
+    for(let i=0;i<N0;i++){
+      const angSpeed = 0.0006 / Math.max(0.3, rad0[i]/110);
+      ang0[i]+=angSpeed;
+      p[i*3]  =Math.cos(ang0[i])*rad0[i];
+      p[i*3+2]=Math.sin(ang0[i])*rad0[i];
+
+      if(pulsing){
+        const pulse=0.5+0.5*Math.sin(t*4+i*0.02);
+        c[i*3+1]=bit0[i]===1?0.94*pulse:0.64*pulse;
+        c[i*3+2]=bit0[i]===1?0.79*pulse:0.91*pulse;
+      }
+    }
+    geo0.attributes.position.needsUpdate=true;
+    if(pulsing) geo0.attributes.color.needsUpdate=true;
+  }
+
+  /* MODE 1: tree sway */
+  if(mode===1){
+    G[1].rotation.y=Math.sin(t*0.2)*0.08;
+  }
+
+  /* MODE 2: rain fall */
+  if(mode===2){
+    const p=geo2.attributes.position.array;
+    for(let i=0;i<N2;i++){
+      p[i*3+1]-=vel2[i];
+      if(p[i*3+1]<-60){
+        p[i*3+1]=60;
+        bitChar2[i]=Math.random()<0.5?0:1;
+      }
+    }
+    geo2.attributes.position.needsUpdate=true;
+    G[2].rotation.y=t*0.05;
+  }
+
+  /* MODE 3: fractal spin */
+  if(mode===3){
+    G[3].rotation.y=t*0.15;
+    G[3].rotation.x=Math.sin(t*0.08)*0.3;
+  }
+
+  /* MODE 4: num orb spin */
+  if(mode===4){
+    G[4].rotation.y=t*0.4;
+    if(pulsing){
+      G[4].children.forEach((ch,i)=>{
+        ch.position.z=Math.sin(t*2+i*0.4)*1.5;
+      });
+    }
+  }
+
+  R.render(scene,cam);
+}
+
+/* ── Start ────────────────────────────────────── */
+const loader=document.getElementById('loading');
+setTimeout(()=>{
+  loader.style.opacity='0';
+  setTimeout(()=>loader.style.display='none',500);
+  animate();
+},900);
+
+})();
+</script>
+</body>
+</html>
