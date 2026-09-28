@@ -43,7 +43,7 @@ def run_master_ecosystem():
     status_str = "🟢 ATIVO (http://localhost:8080)" if web_status else "🔴 OFFLINE"
     print(f"\n[0] PAINEL DE STATUS DA APLICAÇÃO WEB:")
     print(f"  Servidor Local: {status_str}")
-    print(f"  Diretório do Projeto: C:\\Users\\alessandro.meneses.Automotion\\.gemini\\antigravity-ide\\scratch\\custom-binary-studio\\")
+    print(f"  Diretório do Projeto: C:\\Users\\developer\\.gemini\\antigravity-ide\\scratch\\custom-binary-studio\\")
 
     # Módulo 1: Motor Algorítmico Cru
     print("\n" + "─" * 80)
