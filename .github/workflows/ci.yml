@@ -1,0 +1,54 @@
+name: NEXUS Ecosystem CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  engine-validation:
+    name: Computational Engine & Syntax Validation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify Python Compilation
+        run: |
+          python -m py_compile *.py
+        shell: bash
+
+      - name: Test Computational Engines
+        run: |
+          python master_binary_ecosystem.py --help || python -c "import custom_binary_engine; print('Custom Binary Engine Loaded')"
+          python -c "import non_binary_frontier_engine; print('Non-Binary Frontier Engine Loaded')"
+          python -c "import reverse_engineer_engine; print('Reverse Engineer Engine Loaded')"
+        shell: bash
+
+  web-validation:
+    name: HTML5 & WebGL Assets Integrity Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Validate Critical HTML Entrypoints
+        run: |
+          test -f index.html
+          test -f nexus.html
+          test -f omnisystem.html
+          test -f cosmos.html
+          test -f universe.html
+          test -f research.html
+          echo "All core simulation entrypoints exist."
+        shell: bash
